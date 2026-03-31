@@ -1,0 +1,102 @@
+# ============================================================
+#  .github/labeler.yml  —  PR Auto-Label Configuration
+# ============================================================
+#
+#  HOW TO READ THIS:
+#  Each top-level key is a label name.
+#  Under each label, list the file patterns that trigger it.
+#  When any changed file in a PR matches a pattern, that
+#  label is applied to the PR automatically.
+#
+#  BEFORE THIS WORKS:
+#  Create all these labels at:
+#  https://github.com/aiacta-org/aiacta/labels
+#
+#  Suggested colours:
+#    package: sdk       → #0075ca (blue)
+#    package: linter    → #e4e669 (yellow)
+#    package: aac       → #d73a4a (red)
+#    documentation      → #0075ca (blue)
+#    security           → #ee0701 (bright red)
+#    ci/cd              → #7057ff (purple)
+#    spec-change        → #e11d48 (rose)
+#    schema             → #f9c74f (amber)
+# ============================================================
+
+"package: linter":
+  - changed-files:
+    - any-glob-to-any-file: 'packages/ai-attribution-lint/**'
+
+"package: sdk":
+  - changed-files:
+    - any-glob-to-any-file: 'packages/ai-citation-sdk/**'
+
+"package: crawler":
+  - changed-files:
+    - any-glob-to-any-file: 'packages/crawl-manifest-client/**'
+
+"package: dashboard":
+  - changed-files:
+    - any-glob-to-any-file: 'packages/aac-dashboard-lite/**'
+
+"package: aac-server":
+  - changed-files:
+    - any-glob-to-any-file: 'packages/aac-server/**'
+
+"package: gateway":
+  - changed-files:
+    - any-glob-to-any-file: 'packages/vwp-gateway/**'
+
+"package: honeypot":
+  - changed-files:
+    - any-glob-to-any-file: 'packages/honeypot-verifier/**'
+
+"package: referrer":
+  - changed-files:
+    - any-glob-to-any-file: 'packages/referrer-middleware/**'
+
+"package: test-harness":
+  - changed-files:
+    - any-glob-to-any-file: 'packages/attribution-test-harness/**'
+
+"documentation":
+  - changed-files:
+    - any-glob-to-any-file: 'docs/**'
+    - any-glob-to-any-file: '*.md'
+    - any-glob-to-any-file: '**/*.md'
+
+"schema":
+  - changed-files:
+    - any-glob-to-any-file: 'shared/schemas/**'
+    - any-glob-to-any-file: 'shared/types/**'
+
+"spec-change":
+  - changed-files:
+    - any-glob-to-any-file: 'docs/proposals/**'
+    - any-glob-to-any-file: 'shared/schemas/**'
+
+"ci/cd":
+  - changed-files:
+    - any-glob-to-any-file: '.github/**'
+    - any-glob-to-any-file: 'Dockerfile*'
+    - any-glob-to-any-file: 'docker-compose*'
+
+"dependencies":
+  - changed-files:
+    - any-glob-to-any-file: '**/package.json'
+    - any-glob-to-any-file: '**/package-lock.json'
+    - any-glob-to-any-file: '**/go.mod'
+    - any-glob-to-any-file: '**/go.sum'
+    - any-glob-to-any-file: '**/requirements*.txt'
+    - any-glob-to-any-file: '**/setup.py'
+
+"go":
+  - changed-files:
+    - any-glob-to-any-file: '**/*.go'
+    - any-glob-to-any-file: '**/go.mod'
+
+"python":
+  - changed-files:
+    - any-glob-to-any-file: '**/*.py'
+    - any-glob-to-any-file: '**/requirements*.txt'
+    - any-glob-to-any-file: '**/setup.py'

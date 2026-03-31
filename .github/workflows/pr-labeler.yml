@@ -1,0 +1,48 @@
+# ============================================================
+#  pr-labeler.yml  —  Automatic PR Labelling
+# ============================================================
+#
+#  WHAT THIS DOES:
+#  When a PR is opened or updated, automatically applies labels
+#  based on which files changed. This saves maintainers the
+#  manual work of labelling PRs and makes filtering possible.
+#
+#  LABELS APPLIED AUTOMATICALLY:
+#    packages/ai-attribution-lint/**  → "package: linter"
+#    packages/ai-citation-sdk/**      → "package: sdk"
+#    packages/aac-server/**           → "package: aac-server"
+#    packages/vwp-gateway/**          → "package: gateway"
+#    docs/**                          → "documentation"
+#    shared/schemas/**                → "schema"
+#    .github/**                       → "ci/cd"
+#    *.md                             → "documentation"
+#
+#  REQUIRES:
+#  Create a .github/labeler.yml config file (below this workflow).
+#  The labels must already exist in your repository
+#  (Settings → Labels → create each label).
+# ============================================================
+
+name: Label PRs
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    name: Apply labels based on changed files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # Path to the labeller config file (defined below)
+          configuration-path: .github/labeler.yml
+          # Apply labels even if some label does not exist
+          # (warns instead of failing)
+          sync-labels: false

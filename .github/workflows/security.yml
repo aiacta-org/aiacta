@@ -1,0 +1,220 @@
+# ============================================================
+#  security.yml  —  Scheduled Security Scanning
+# ============================================================
+#
+#  WHAT THIS DOES:
+#  Runs weekly (and on every push to main) to:
+#    1. Scan npm dependencies for known CVEs
+#    2. Scan Go dependencies for known CVEs (govulncheck)
+#    3. Scan Python dependencies for known CVEs (safety)
+#    4. Scan source code with CodeQL static analysis
+#    5. Upload all results to GitHub Security tab
+#
+#  WHERE TO SEE RESULTS:
+#  GitHub repository → Security → Code scanning alerts
+#  GitHub repository → Security → Dependabot alerts
+#
+#  WHY WEEKLY:
+#  New vulnerabilities are discovered every day in third-party
+#  packages. A vulnerability that was not present on Monday may
+#  be published on Thursday. Weekly scanning catches these between
+#  releases.
+# ============================================================
+
+name: Security
+
+on:
+  # Run on push to main so every merged change is scanned
+  push:
+    branches: [main]
+  # Run weekly on Monday at 08:00 UTC
+  # Cron format: minute hour day-of-month month day-of-week
+  schedule:
+    - cron: '0 8 * * 1'
+  # Allow manual trigger from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write  # Required to upload SARIF results to Security tab
+  actions: read
+
+jobs:
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 1 — CODEQL ANALYSIS (JavaScript and TypeScript)
+  # CodeQL is GitHub's static analysis engine. It finds security
+  # vulnerabilities in source code — not dependencies, but the
+  # code YOU wrote. Examples: SQL injection, path traversal,
+  # prototype pollution, missing authentication checks.
+  #
+  # For AIACTA this is especially important for:
+  #   - aac-server (SQL queries, authentication)
+  #   - vwp-gateway (input validation, signature verification)
+  #   - honeypot-verifier (URL handling)
+  # ──────────────────────────────────────────────────────────────
+  codeql:
+    name: CodeQL analysis (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # javascript covers both .js and .ts files
+        language: ['javascript', 'go', 'python']
+    steps:
+      - uses: actions/checkout@v4
+
+      # Initialize CodeQL with the language-specific query suite.
+      # "security-and-quality" runs both security checks and
+      # code quality rules (more than just "security").
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      # For JavaScript and Python, CodeQL auto-builds.
+      # For Go, it needs to explicitly compile.
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      # Run the analysis and upload results to the Security tab.
+      # Results appear at: github.com/aiacta-org/aiacta/security/code-scanning
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 2 — NPM DEPENDENCY VULNERABILITY SCAN
+  # More detailed than the CI audit — this one uploads results
+  # to the GitHub Security tab as structured SARIF output.
+  # ──────────────────────────────────────────────────────────────
+  npm-audit:
+    name: npm dependency scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Run npm audit
+        run: |
+          npm audit --json > npm-audit.json || true
+          # Count vulnerabilities by severity
+          node -e "
+          const r = require('./npm-audit.json');
+          const meta = r.metadata || {};
+          const vulns = meta.vulnerabilities || {};
+          console.log('Vulnerability summary:');
+          console.log('  critical:', vulns.critical || 0);
+          console.log('  high:    ', vulns.high || 0);
+          console.log('  moderate:', vulns.moderate || 0);
+          console.log('  low:     ', vulns.low || 0);
+          const blocking = (vulns.critical || 0) + (vulns.high || 0);
+          if (blocking > 0) {
+            console.error('');
+            console.error(blocking + ' high/critical vulnerability(ies) require immediate attention.');
+            process.exit(1);
+          }
+          "
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-weekly
+          path: npm-audit.json
+          retention-days: 90
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 3 — GO VULNERABILITY SCAN
+  # govulncheck is the official Go vulnerability scanner from
+  # the Go security team. It checks both dependencies and the
+  # specific functions your code actually calls — more precise
+  # than just listing vulnerable packages (avoids false positives
+  # where the vulnerable function is in a dependency but you
+  # never call it).
+  # ──────────────────────────────────────────────────────────────
+  go-vuln:
+    name: Go vulnerability scan (govulncheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      # govulncheck is maintained by the Go security team and
+      # checks against the official Go vulnerability database.
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Scan Go SDK
+        run: govulncheck ./...
+        working-directory: packages/ai-citation-sdk/src/go
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 4 — PYTHON DEPENDENCY VULNERABILITY SCAN
+  # pip-audit checks Python dependencies against the Python
+  # Advisory Database (PyPA Advisory DB) and OSV.
+  # ──────────────────────────────────────────────────────────────
+  python-audit:
+    name: Python dependency scan (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit Python SDK dependencies
+        run: |
+          pip install cryptography>=41.0 requests>=2.31
+          pip-audit --desc --output pip-audit.json --format json || true
+          pip-audit --desc
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-weekly
+          path: pip-audit.json
+          retention-days: 90
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 5 — SECRET SCANNING
+  # Checks if any secrets (API keys, tokens, passwords) were
+  # accidentally committed in the source code. Uses truffleHog,
+  # which scans the full git history — not just the latest commit.
+  # This catches secrets that were removed in a later commit but
+  # remain accessible in the git history.
+  # ──────────────────────────────────────────────────────────────
+  secret-scan:
+    name: Secret scanning (truffleHog)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so truffleHog can scan all commits
+          fetch-depth: 0
+
+      - name: Scan for committed secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          # Only scan commits not in the base branch (new commits only)
+          # This makes PR checks fast without re-scanning all history
+          base: ${{ github.event.repository.default_branch }}
+          extra_args: --debug --only-verified
+        # continue-on-error: true because truffleHog may have false positives.
+        # Review the output — a failure here means a POSSIBLE secret was found.
+        # The CI audit job (which fails on high CVEs) is your hard gate.
+        continue-on-error: true

@@ -1,0 +1,359 @@
+# ============================================================
+#  release.yml  —  AIACTA Automated Release Workflow
+# ============================================================
+#
+#  WHAT THIS DOES:
+#  When a maintainer pushes a version tag (e.g. "v1.1.0"),
+#  this workflow automatically:
+#    1. Runs the full test suite one final time
+#    2. Publishes packages to npm (public registry)
+#    3. Publishes the Python SDK to PyPI
+#    4. Creates a GitHub Release with the CHANGELOG section
+#    5. Builds and uploads the dashboard dist as a release asset
+#
+#  HOW TO TRIGGER A RELEASE:
+#    git tag -a v1.1.0 -m "Release v1.1.0"
+#    git push origin v1.1.0
+#
+#  REQUIRED GITHUB SECRETS (set in Settings → Secrets → Actions):
+#    NPM_TOKEN      — npm publish token from npmjs.com
+#    PYPI_TOKEN     — PyPI API token from pypi.org
+#    CODECOV_TOKEN  — from codecov.io (optional)
+#
+#  IMPORTANT: Only maintainers should push tags. The npm and
+#  PyPI tokens give write access to public packages. Protect them.
+# ============================================================
+
+name: Release
+
+on:
+  push:
+    # Only trigger on version tags matching v1.2.3 or v1.2.3-beta.1
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+# Release jobs need write permission to create GitHub Releases.
+permissions:
+  contents: write    # Create releases and upload assets
+  id-token: write    # For PyPI trusted publishing (OIDC)
+
+jobs:
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 1 — VALIDATE TAG FORMAT
+  # Catches typos like "v1.1" or "1.1.0" (missing "v" prefix)
+  # before we waste time running all the release steps.
+  # ──────────────────────────────────────────────────────────────
+  validate-tag:
+    name: Validate release tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+      is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
+    steps:
+      - name: Parse tag
+        id: parse
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Tag: $TAG"
+
+          # Must match vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-suffix
+          if ! echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-.+)?$'; then
+            echo "❌ Invalid tag format: $TAG"
+            echo "   Expected: vMAJOR.MINOR.PATCH (e.g. v1.1.0)"
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          # Determine if this is a pre-release (has a suffix like -beta.1)
+          if echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+-'; then
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "Pre-release: $TAG"
+          else
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "Stable release: $TAG"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 2 — PRE-RELEASE TEST RUN
+  # Runs the full test suite one final time on the exact commit
+  # being tagged. If tests fail at release time, the release is
+  # aborted before anything is published.
+  # ──────────────────────────────────────────────────────────────
+  test:
+    name: Final test run before release
+    runs-on: ubuntu-latest
+    needs: [validate-tag]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run all Node.js tests
+        run: npm test --workspaces --if-present
+        env:
+          NODE_ENV: test
+          AAC_DB_PATH: ':memory:'
+          CI: 'true'
+
+      - name: Run Go tests
+        run: go test -v -race ./...
+        working-directory: packages/ai-citation-sdk/src/go
+
+      - name: Install Python deps and run tests
+        run: |
+          pip install cryptography>=41.0 requests>=2.31 pytest
+          python -m pytest packages/ai-citation-sdk/src/python -v
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 3 — PUBLISH TO NPM
+  # Publishes the four user-facing Node.js packages to the
+  # public npm registry under the @aiacta-org scope (or unscoped).
+  #
+  # PACKAGES PUBLISHED:
+  #   ai-attribution-lint     (CLI tool — npx ai-attribution-lint)
+  #   ai-citation-sdk         (webhook receiver SDK)
+  #   crawl-manifest-client   (API client)
+  #
+  # NOT PUBLISHED (server/deployment packages):
+  #   aac-server, vwp-gateway, honeypot-verifier, referrer-middleware,
+  #   attribution-test-harness, aac-dashboard-lite
+  #   (These are deployed, not downloaded as libraries)
+  # ──────────────────────────────────────────────────────────────
+  publish-npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs: [validate-tag, test]
+    environment:
+      # "production" environment in GitHub requires manual approval
+      # before proceeding. Configure this in Settings → Environments.
+      name: production
+      url: https://www.npmjs.com/package/ai-attribution-lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js with npm registry auth
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          # registry-url tells setup-node to configure .npmrc
+          # so that npm publish uses this registry with auth
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Verify the package.json version matches the git tag.
+      # Prevents publishing version 1.0.0 when the tag is v1.1.0.
+      - name: Verify version matches tag
+        run: |
+          TAG_VERSION="${{ needs.validate-tag.outputs.version }}"
+          PKG_VERSION=$(node -p "require('./packages/ai-attribution-lint/package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "❌ Tag version ($TAG_VERSION) does not match package.json ($PKG_VERSION)"
+            echo "   Bump the version in all package.json files before tagging."
+            exit 1
+          fi
+          echo "✅ Version $TAG_VERSION matches tag"
+
+      - name: Publish ai-attribution-lint
+        run: npm publish --access public
+        working-directory: packages/ai-attribution-lint
+        env:
+          # NODE_AUTH_TOKEN is the npm access token stored in GitHub Secrets.
+          # actions/setup-node reads this and writes ~/.npmrc automatically.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish ai-citation-sdk (Node.js)
+        run: npm publish --access public
+        working-directory: packages/ai-citation-sdk
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish crawl-manifest-client
+        run: npm publish --access public
+        working-directory: packages/crawl-manifest-client
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 4 — PUBLISH PYTHON SDK TO PyPI
+  # Uses PyPI's "trusted publishing" (OIDC) which is more secure
+  # than API tokens because no long-lived secret is stored in GitHub.
+  #
+  # SETUP STEPS (one-time, do before first release):
+  #   1. Go to pypi.org → Your Account → Publishing
+  #   2. Add a "trusted publisher" with:
+  #      Owner: aiacta-org
+  #      Repository: aiacta
+  #      Workflow: release.yml
+  #      Environment: production
+  # ──────────────────────────────────────────────────────────────
+  publish-pypi:
+    name: Publish Python SDK to PyPI
+    runs-on: ubuntu-latest
+    needs: [validate-tag, test]
+    environment:
+      name: production
+      url: https://pypi.org/project/ai-citation-sdk/
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build Python package
+        run: python -m build
+        working-directory: packages/ai-citation-sdk/src/python
+
+      # Verify the distribution before uploading.
+      # twine check catches common packaging errors.
+      - name: Verify distribution packages
+        run: twine check packages/ai-citation-sdk/src/python/dist/*
+
+      # Publish using OIDC (no stored API token required).
+      # Requires the trusted publisher to be configured on PyPI (see above).
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/ai-citation-sdk/src/python/dist/
+          # verbose: true shows upload progress
+          verbose: true
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 5 — BUILD DASHBOARD FOR RELEASE
+  # Builds the dashboard and uploads it as a release asset so the
+  # ops team can download it and deploy to dashboard.aiacta.org
+  # without needing to run a build themselves.
+  # ──────────────────────────────────────────────────────────────
+  build-dashboard-release:
+    name: Build dashboard for release
+    runs-on: ubuntu-latest
+    needs: [validate-tag, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - run: npm ci
+        working-directory: packages/aac-dashboard-lite
+      - run: npm run build
+        working-directory: packages/aac-dashboard-lite
+        env:
+          NODE_ENV: production
+
+      # Zip the dist folder for attachment to the GitHub Release
+      - name: Create dashboard zip
+        run: |
+          VERSION="${{ needs.validate-tag.outputs.version }}"
+          zip -r "aac-dashboard-$VERSION.zip" packages/aac-dashboard-lite/dist/
+          echo "Created aac-dashboard-$VERSION.zip"
+
+      - name: Save dashboard zip as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-release-zip
+          path: "aac-dashboard-*.zip"
+          retention-days: 90
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 6 — CREATE GITHUB RELEASE
+  # Creates the GitHub Release page with:
+  #   - Release notes extracted from CHANGELOG.md
+  #   - Dashboard zip attached as a downloadable asset
+  # ──────────────────────────────────────────────────────────────
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - validate-tag
+      - publish-npm
+      - publish-pypi
+      - build-dashboard-release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history needed to read CHANGELOG.md
+          fetch-depth: 0
+
+      # Extract the release notes for THIS version from CHANGELOG.md.
+      # The CHANGELOG format is:
+      #   ## [1.1.0] — 2026-04-01
+      #   ... notes ...
+      #   ## [1.0.0] — 2026-03-29
+      # This script extracts everything between the current version
+      # header and the next version header.
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        run: |
+          VERSION="${{ needs.validate-tag.outputs.version }}"
+          NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} /^## \[/{if(found) exit} found{print}" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="See CHANGELOG.md for details."
+          fi
+          # GitHub Actions multiline output: use delimiter
+          echo "notes<<EOF_NOTES" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "EOF_NOTES" >> "$GITHUB_OUTPUT"
+
+      # Download the dashboard zip that job 5 created
+      - name: Download dashboard artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-release-zip
+          path: ./release-assets/
+
+      # softprops/action-gh-release creates the GitHub Release.
+      # The 'files' field attaches assets to the release.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "v${{ needs.validate-tag.outputs.version }}"
+          body: |
+            ## What's Changed
+
+            ${{ steps.notes.outputs.notes }}
+
+            ---
+
+            **Packages published:**
+            - npm: `npm install ai-attribution-lint@${{ needs.validate-tag.outputs.version }}`
+            - npm: `npm install ai-citation-sdk@${{ needs.validate-tag.outputs.version }}`
+            - npm: `npm install crawl-manifest-client@${{ needs.validate-tag.outputs.version }}`
+            - PyPI: `pip install ai-citation-sdk==${{ needs.validate-tag.outputs.version }}`
+
+            **Full Changelog:** https://github.com/aiacta-org/aiacta/blob/main/CHANGELOG.md
+          prerelease: ${{ needs.validate-tag.outputs.is_prerelease == 'true' }}
+          draft: false
+          generate_release_notes: false
+          files: |
+            ./release-assets/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

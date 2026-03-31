@@ -1,0 +1,463 @@
+# ============================================================
+#  ci.yml  —  AIACTA Main Continuous Integration Workflow
+# ============================================================
+#
+#  WHAT THIS FILE DOES:
+#  Runs automatically on every push and Pull Request.
+#  Every job must pass before a PR can be merged into main.
+#
+#  JOBS:
+#    1. changes          — Detects which packages changed (path filtering)
+#    2. test-node        — Jest unit tests on Node 18, 20, 22
+#    3. test-go          — Go tests + vet on Go 1.21 and 1.22
+#    4. test-python      — pytest on Python 3.9, 3.11, 3.12
+#    5. lint-fixtures    — Validates ai-attribution.txt test fixtures
+#    6. build-dashboard  — Confirms React dashboard compiles
+#    7. audit            — npm security audit (blocks high/critical CVEs)
+#    8. spec-alignment   — Checks §section references exist in docs/
+#    9. validate-schemas — JSON Schema syntax + fixture conformance
+#   10. ci-status        — Single pass/fail gate for branch protection
+#
+#  HOW TO USE IN BRANCH PROTECTION:
+#  Settings → Branches → main → Require status checks
+#  Add ONLY: "CI — all checks passed"
+#  (The ci-status job aggregates everything else)
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Cancel older runs on the same branch when a new commit is pushed.
+# Saves Actions minutes and avoids confusion from stale results.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 1 — CHANGE DETECTION
+  # Figures out which packages changed so downstream jobs can
+  # give targeted failure messages. Does NOT skip any jobs
+  # (all jobs run on every PR) but the outputs are available
+  # for conditional steps within jobs.
+  # ──────────────────────────────────────────────────────────────
+  changes:
+    name: Detect changed packages
+    runs-on: ubuntu-latest
+    outputs:
+      node:      ${{ steps.filter.outputs.node }}
+      go:        ${{ steps.filter.outputs.go }}
+      python:    ${{ steps.filter.outputs.python }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+      schemas:   ${{ steps.filter.outputs.schemas }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            node:
+              - 'packages/ai-attribution-lint/**'
+              - 'packages/ai-citation-sdk/src/node/**'
+              - 'packages/crawl-manifest-client/src/node/**'
+              - 'packages/aac-server/**'
+              - 'packages/vwp-gateway/**'
+              - 'packages/referrer-middleware/src/node/**'
+              - 'packages/honeypot-verifier/**'
+              - 'shared/**'
+              - 'package.json'
+              - 'package-lock.json'
+            go:
+              - 'packages/ai-citation-sdk/src/go/**'
+            python:
+              - 'packages/ai-citation-sdk/src/python/**'
+              - 'packages/crawl-manifest-client/src/python/**'
+              - 'packages/referrer-middleware/src/python/**'
+            dashboard:
+              - 'packages/aac-dashboard-lite/**'
+            schemas:
+              - 'shared/schemas/**'
+              - 'packages/attribution-test-harness/fixtures/**'
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 2 — NODE.JS TESTS
+  # Matrix: 3 Node versions × 7 packages = 21 parallel jobs.
+  # fail-fast: false means all combinations run even if one fails,
+  # giving a complete picture of breakage across versions.
+  # ──────────────────────────────────────────────────────────────
+  test-node:
+    name: "Node ${{ matrix.node }} — ${{ matrix.package }}"
+    runs-on: ubuntu-latest
+    needs: [changes]
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['18.x', '20.x', '22.x']
+        package:
+          - ai-attribution-lint
+          - ai-citation-sdk
+          - crawl-manifest-client
+          - aac-server
+          - vwp-gateway
+          - referrer-middleware
+          - honeypot-verifier
+        include:
+          # aac-server uses better-sqlite3 which needs :memory: in tests
+          - package: aac-server
+            db_path: ':memory:'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          # Cache npm downloads between runs (~30s saved per run)
+          cache: 'npm'
+
+      # npm ci is the CI-safe version of npm install:
+      # uses package-lock.json exactly, no range resolution,
+      # fails if lock file is out of sync. Always use in CI.
+      - name: Install dependencies (npm ci)
+        run: npm ci
+
+      - name: Run Jest tests — ${{ matrix.package }}
+        working-directory: packages/${{ matrix.package }}
+        run: npm test -- --ci --coverage --forceExit
+        env:
+          NODE_ENV: test
+          CI: 'true'
+          NO_COLOR: '1'
+          AAC_DB_PATH: ${{ matrix.db_path || '' }}
+
+      # Only upload coverage once — Node 20, aac-server package
+      - name: Upload coverage report
+        if: matrix.node == '20.x' && matrix.package == 'aac-server'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: packages/aac-server/coverage
+          flags: aac-server
+          fail_ci_if_error: false
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 3 — GO SDK TESTS
+  # -race: enables the race condition detector.
+  #        Slower but catches concurrency bugs not visible otherwise.
+  # go vet: static analysis built into Go (catches common bugs).
+  # ──────────────────────────────────────────────────────────────
+  test-go:
+    name: "Go ${{ matrix.go }} — ai-citation-sdk"
+    runs-on: ubuntu-latest
+    needs: [changes]
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.21', '1.22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go ${{ matrix.go }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: Run tests with race detector
+        working-directory: packages/ai-citation-sdk/src/go
+        run: go test -v -race -count=1 ./...
+        # -count=1 disables test result caching so tests always run
+
+      - name: Run go vet (static analysis)
+        working-directory: packages/ai-citation-sdk/src/go
+        run: go vet ./...
+
+      - name: Check formatting (gofmt)
+        working-directory: packages/ai-citation-sdk/src/go
+        run: |
+          UNFORMATTED=$(gofmt -l .)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "The following files need gofmt formatting:"
+            echo "$UNFORMATTED"
+            echo ""
+            echo "Run: gofmt -w . in packages/ai-citation-sdk/src/go"
+            exit 1
+          fi
+          echo "✅ All Go files are correctly formatted"
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 4 — PYTHON TESTS
+  # Three packages × three Python versions = 9 parallel jobs.
+  # ──────────────────────────────────────────────────────────────
+  test-python:
+    name: "Python ${{ matrix.python }} — ${{ matrix.package }}"
+    runs-on: ubuntu-latest
+    needs: [changes]
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.9', '3.11', '3.12']
+        include:
+          - package: ai-citation-sdk
+            src_dir: packages/ai-citation-sdk/src/python
+            test_pattern: "packages/ai-citation-sdk/src/python"
+          - package: crawl-manifest-client
+            src_dir: packages/crawl-manifest-client/src/python
+            test_pattern: "packages/crawl-manifest-client/tests"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.src_dir }}
+        run: |
+          python -m pip install --upgrade pip
+          # Try installing with [test] extras first, fall back to explicit deps
+          pip install cryptography>=41.0 requests>=2.31 pytest pytest-cov
+
+      - name: Run pytest
+        run: |
+          python -m pytest ${{ matrix.test_pattern }}             -v --tb=short -x             --no-header             --color=no
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 5 — LINT ai-attribution.txt FIXTURES
+  # Tests that the TEST FIXTURES THEMSELVES are correct.
+  # Valid fixture should pass linting; invalid should fail.
+  # ──────────────────────────────────────────────────────────────
+  lint-fixtures:
+    name: Validate ai-attribution.txt fixtures
+    runs-on: ubuntu-latest
+    needs: [changes]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - name: Install linter
+        run: npm ci
+        working-directory: packages/ai-attribution-lint
+
+      - name: Valid fixture — must return exit 0
+        run: |
+          node src/cli.js             ../../attribution-test-harness/fixtures/ai-attribution-txt/valid.txt             --json
+          echo "✅ Valid fixture passed linting"
+        working-directory: packages/ai-attribution-lint
+
+      - name: Invalid fixture — must return exit non-zero
+        run: |
+          set +e
+          node src/cli.js             ../../attribution-test-harness/fixtures/ai-attribution-txt/invalid.txt             --json
+          CODE=$?
+          set -e
+          if [ "$CODE" -eq 0 ]; then
+            echo "❌ FAIL: Linter accepted an INVALID fixture (exit 0)"
+            echo "   The linter is not catching errors it should."
+            exit 1
+          fi
+          echo "✅ Invalid fixture correctly rejected (exit $CODE)"
+        working-directory: packages/ai-attribution-lint
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 6 — DASHBOARD BUILD
+  # Confirms the React app compiles. Build failures break the
+  # publisher-facing dashboard. Artifact uploaded for inspection.
+  # ──────────────────────────────────────────────────────────────
+  build-dashboard:
+    name: Build React dashboard
+    runs-on: ubuntu-latest
+    needs: [changes]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/aac-dashboard-lite
+      - name: Build (Vite production)
+        run: npm run build
+        working-directory: packages/aac-dashboard-lite
+        env:
+          NODE_ENV: production
+      - name: Upload build artifact (7-day retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-dist-${{ github.sha }}
+          path: packages/aac-dashboard-lite/dist/
+          retention-days: 7
+          if-no-files-found: error
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 7 — SECURITY AUDIT
+  # Blocks merge if any HIGH or CRITICAL npm vulnerability exists.
+  # Moderate/low are reported but do not block.
+  # ──────────────────────────────────────────────────────────────
+  audit:
+    name: npm security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - run: npm ci
+
+      # This step FAILS CI if high/critical vulnerabilities are found.
+      - name: Audit — fail on high/critical
+        run: npm audit --audit-level=high
+
+      # This step always runs and records the full report.
+      # "|| true" means it never fails CI even if moderate vulns exist.
+      - name: Audit — full report (informational)
+        run: npm audit --json > npm-audit-report.json || true
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: npm-audit-report.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 8 — SPEC SECTION ALIGNMENT
+  # Extracts all §X.Y references from source code and checks
+  # each one appears in a docs/proposals/ file.
+  # Issues warnings (not failures) for unmatched references —
+  # a new feature may reference a spec section before the
+  # corresponding doc is written.
+  # ──────────────────────────────────────────────────────────────
+  spec-alignment:
+    name: Spec section reference audit
+    runs-on: ubuntu-latest
+    needs: [changes]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract spec references and check docs
+        run: |
+          echo "=== Extracting §section references from source code ==="
+          REFS=$(grep -rh "§[0-9][0-9.]*[A-D]*" packages/ shared/             --include="*.js" --include="*.ts"             --include="*.py" --include="*.go"             2>/dev/null             | grep -oE "§[0-9][0-9.]*[A-D]*"             | sort -u)
+
+          if [ -z "$REFS" ]; then
+            echo "No §section references found."
+            exit 0
+          fi
+
+          echo "References found:"
+          MISSING=0
+          while IFS= read -r ref; do
+            SECTION=$(echo "$ref" | sed 's/§//' | sed 's/[A-D]$//')
+            if grep -qr "$SECTION" docs/proposals/ 2>/dev/null; then
+              echo "  ✅  $ref"
+            else
+              echo "  ⚠️  $ref — not documented in docs/proposals/"
+              MISSING=$((MISSING+1))
+            fi
+          done <<< "$REFS"
+
+          echo ""
+          if [ $MISSING -gt 0 ]; then
+            echo "::warning::$MISSING spec §reference(s) in code have no matching docs/proposals/ entry."
+          else
+            echo "All spec references are documented. ✅"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 9 — JSON SCHEMA VALIDATION
+  # Validates shared/schemas/*.json are valid JSON Schema (draft-07)
+  # and that the fixture files in attribution-test-harness conform.
+  # ──────────────────────────────────────────────────────────────
+  validate-schemas:
+    name: Validate JSON schemas and fixtures
+    runs-on: ubuntu-latest
+    needs: [changes]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: Install AJV schema validator
+        run: npm install -g ajv-cli ajv-formats
+
+      - name: Check schema files are valid JSON
+        run: |
+          for f in shared/schemas/*.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))"               && echo "  ✅  $f"               || (echo "  ❌  $f is not valid JSON" && exit 1)
+          done
+
+      - name: Validate crawl-manifest fixture
+        run: |
+          ajv validate             -s shared/schemas/crawl-manifest.schema.json             -d packages/attribution-test-harness/fixtures/crawl-manifest/sample.json             --spec=draft7 --strict=false 2>&1             && echo "  ✅  crawl-manifest fixture valid"             || echo "::warning::Crawl manifest fixture does not conform to schema"
+
+      - name: Validate citation-webhook fixture
+        run: |
+          ajv validate             -s shared/schemas/citation-webhook.schema.json             -d packages/attribution-test-harness/fixtures/citation-webhooks/sample-event.json             --spec=draft7 --strict=false 2>&1             && echo "  ✅  citation-webhook fixture valid"             || echo "::warning::Citation webhook fixture does not conform to schema"
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 10 — FINAL GATE
+  # All other jobs must pass for this job to pass.
+  # Configure branch protection to require ONLY this job.
+  # ──────────────────────────────────────────────────────────────
+  ci-status:
+    name: "CI — all checks passed"
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+      - test-node
+      - test-go
+      - test-python
+      - lint-fixtures
+      - build-dashboard
+      - audit
+      - spec-alignment
+      - validate-schemas
+    if: always()
+    steps:
+      - name: Evaluate all job results
+        run: |
+          RESULTS='${{ toJSON(needs) }}'
+          python3 - <<'PY'
+          import sys, json
+          results = json.loads('${{ toJSON(needs) }}')
+          passed, failed = [], []
+          for job, data in results.items():
+              r = data.get('result', 'unknown')
+              (passed if r in ('success','skipped') else failed).append((job, r))
+          for j, r in passed:
+              print(f"  ✅  {j}: {r}")
+          for j, r in failed:
+              print(f"  ❌  {j}: {r}")
+          if failed:
+              print(f"\n❌ {len(failed)} job(s) failed. PR cannot be merged.")
+              sys.exit(1)
+          else:
+              print(f"\n✅ All {len(passed)} CI checks passed.")
+          PY

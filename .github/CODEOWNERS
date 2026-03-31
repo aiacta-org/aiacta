@@ -1,0 +1,52 @@
+# ============================================================
+#  CODEOWNERS — Automatic Reviewer Assignment
+# ============================================================
+#
+#  WHAT THIS DOES:
+#  When a PR touches files matching a pattern, GitHub
+#  automatically requests a review from the listed owners.
+#  Owners must approve before the PR can merge.
+#
+#  SYNTAX:
+#  pattern    @github-username  @org/team-name
+#
+#  HOW TO POPULATE THIS FILE:
+#  Replace the placeholder usernames with real GitHub
+#  usernames or team names in your organisation.
+#
+#  Patterns are matched from BOTTOM to TOP — more specific
+#  patterns below override less specific ones above.
+# ============================================================
+
+# ── DEFAULT: All files ──────────────────────────────────────
+# The maintainers team reviews any PR not covered by a more
+# specific rule below.
+*                               @aiacta-org/maintainers
+
+# ── Spec documents — spec team approval required ────────────
+# Changes to the technical proposals or JSON schemas modify the
+# AIACTA standard itself. The spec team must sign off.
+/docs/proposals/                @aiacta-org/spec-team
+/shared/schemas/                @aiacta-org/spec-team
+/shared/types/                  @aiacta-org/spec-team
+
+# ── Security-critical code — security team approval required ─
+# These files handle cryptography, signature verification,
+# and financial calculations. An error here has real impact.
+/packages/vwp-gateway/src/verify-provider-signature.js    @aiacta-org/security-team
+/packages/vwp-gateway/src/proof-of-inference.js           @aiacta-org/security-team
+/packages/ai-citation-sdk/src/node/signature.js           @aiacta-org/security-team
+/packages/ai-citation-sdk/src/python/aiacta/signature.py  @aiacta-org/security-team
+/packages/ai-citation-sdk/src/go/aiacta.go                @aiacta-org/security-team
+/packages/aac-server/src/services/distribution-engine.js  @aiacta-org/security-team
+/packages/aac-server/src/db/database.js                   @aiacta-org/security-team
+/packages/aac-server/src/routes/provenance.js             @aiacta-org/security-team
+
+# ── CI/CD — maintainers approval required ───────────────────
+# Changes to workflows affect every contributor's experience.
+# Only senior maintainers modify the pipeline.
+/.github/                       @aiacta-org/maintainers
+
+# ── Root configuration — maintainers only ───────────────────
+/package.json                   @aiacta-org/maintainers
+/package-lock.json              @aiacta-org/maintainers

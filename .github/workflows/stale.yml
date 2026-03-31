@@ -1,0 +1,148 @@
+# ============================================================
+#  stale.yml  —  Stale Issue and PR Management
+# ============================================================
+#
+#  WHAT THIS DOES:
+#  Runs daily to identify and label Issues and PRs that have
+#  had no activity for a long time. After a further period of
+#  no activity, they are automatically closed.
+#
+#  THIS IS NOT HOSTILE. The purpose is:
+#    1. Keep the issue tracker accurate and navigable
+#    2. Surface abandoned work so maintainers can pick it up
+#    3. Free contributors from feeling obligated to maintain
+#       work they have moved on from
+#
+#  Contributors can always reopen a closed issue/PR, and the
+#  warning comment explains this clearly.
+#
+#  TIMELINES:
+#    Issues: 60 days inactive → warning label, 14 more days → close
+#    PRs:    30 days inactive → warning label, 14 more days → close
+#    (PRs move faster because they block merge queue and context)
+#
+#  EXEMPTIONS:
+#    - Issues labelled "pinned" are never marked stale
+#    - Issues labelled "in-progress" are never marked stale
+#    - Issues labelled "help-wanted" are never marked stale
+#    - Issues labelled "spec-change" are never marked stale
+#    - Security issues are never marked stale
+# ============================================================
+
+name: Manage stale issues and PRs
+
+on:
+  schedule:
+    # Run every day at 06:00 UTC (low-traffic time)
+    - cron: '0 6 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    name: Mark and close stale issues/PRs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # ── Authentication ──────────────────────────────
+          # GITHUB_TOKEN is automatically available; no setup needed.
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # ── Issue configuration ─────────────────────────
+          # Days of no activity before an issue is LABELLED stale
+          days-before-issue-stale: 60
+          # Days after stale label before the issue is CLOSED
+          days-before-issue-close: 14
+
+          stale-issue-label: 'stale'
+          close-issue-reason: 'not planned'
+
+          stale-issue-message: |
+            This issue has been inactive for **60 days** and has been marked as stale.
+
+            If this is still relevant, please:
+            - Leave a comment confirming you are still interested
+            - Add more context or updated information
+            - Ask a maintainer to assign it to you
+
+            If no activity occurs in the next **14 days**, this issue will be
+            closed automatically. You can **reopen it at any time** if needed.
+
+            Thank you for contributing to AIACTA! 🙏
+
+          close-issue-message: |
+            This issue was automatically closed due to **14 days of inactivity**
+            after being marked stale.
+
+            **You can reopen it at any time** if it is still relevant. The
+            issue and all its history remains preserved.
+
+            If you believe this was closed in error, please add a comment
+            and a maintainer will review it.
+
+          # ── PR configuration ────────────────────────────
+          # PRs move faster because they block the merge queue
+          days-before-pr-stale: 30
+          days-before-pr-close: 14
+
+          stale-pr-label: 'stale'
+          close-pr-reason: 'not planned'
+
+          stale-pr-message: |
+            This pull request has been inactive for **30 days** and has been
+            marked as stale.
+
+            This may be because:
+            - Changes were requested but not yet made
+            - The PR is blocked on a discussion or decision
+            - The work has been deprioritised
+
+            **To keep this PR active:**
+            - Push a commit to address any pending review comments
+            - Leave a comment explaining the current status
+            - Ask a maintainer if you need help getting unblocked
+
+            If no activity occurs in the next **14 days**, this PR will be
+            closed automatically. You can **reopen it at any time** — your
+            work is never lost.
+
+          close-pr-message: |
+            This PR was automatically closed after **14 days of inactivity**
+            following the stale warning.
+
+            **You can reopen it at any time.** If circumstances have changed
+            and you are ready to continue, push a new commit and leave a
+            comment — a maintainer will re-review.
+
+            Thank you for contributing to AIACTA.
+
+          # ── Exemptions (never mark these stale) ─────────
+          exempt-issue-labels: >-
+            pinned,
+            in-progress,
+            help-wanted,
+            spec-change,
+            security,
+            blocked,
+            working-group
+          exempt-pr-labels: >-
+            pinned,
+            in-progress,
+            do-not-close,
+            spec-change,
+            security,
+            on-hold
+          exempt-all-milestones: true
+
+          # ── Operational settings ────────────────────────
+          # How many items to process per run (avoid GitHub API limits)
+          operations-per-run: 50
+          # Remove the stale label if someone comments (show it is active)
+          remove-stale-when-updated: true
+          # Also process PRs (not just issues)
+          include-only-assigned: false
+          delete-branch: false

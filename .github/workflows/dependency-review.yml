@@ -1,0 +1,79 @@
+# ============================================================
+#  dependency-review.yml  —  PR Dependency Review
+# ============================================================
+#
+#  WHAT THIS DOES:
+#  When a PR adds or updates dependencies, this action checks
+#  whether the new dependency versions have known security
+#  vulnerabilities BEFORE they are merged.
+#
+#  This is different from the audit in ci.yml:
+#    ci.yml audit → scans currently installed dependencies
+#    dependency-review → scans the DIFF (what is changing)
+#
+#  Example: If a PR changes axios from 1.6.0 to 1.6.8, and
+#  1.6.8 has a known CVE, this action catches it before merge.
+#
+#  REQUIRES:
+#  Repository must have GitHub Advanced Security enabled, OR
+#  be a public repository (free for public repos).
+# ============================================================
+
+name: Dependency Review
+
+on:
+  pull_request:
+    # Only run when dependency files change
+    paths:
+      - '**/package.json'
+      - '**/package-lock.json'
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**/requirements*.txt'
+      - '**/setup.py'
+      - '**/pyproject.toml'
+
+permissions:
+  contents: read
+  pull-requests: write  # To post a comment on the PR with results
+
+jobs:
+  dependency-review:
+    name: Review dependency changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # actions/dependency-review-action compares the dependency
+      # tree before and after the PR, and fails if any new
+      # dependency has a known vulnerability at or above
+      # the specified severity.
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          # Block merge if a new/changed dependency has a HIGH or
+          # CRITICAL vulnerability. MODERATE issues are warned but
+          # do not block.
+          fail-on-severity: high
+          # Post a comment on the PR listing all changed dependencies
+          # and their vulnerability status.
+          comment-summary-in-pr: always
+          # Allow specific licences. Adjust this list based on your
+          # legal team's approved licence list.
+          allow-licenses: |
+            MIT
+            Apache-2.0
+            BSD-2-Clause
+            BSD-3-Clause
+            ISC
+            0BSD
+            Unlicense
+          # Block any dependency with a licence not in the allow list.
+          # This prevents accidentally pulling in GPL or proprietary code.
+          deny-licenses: |
+            GPL-2.0
+            GPL-3.0
+            LGPL-2.0
+            LGPL-2.1
+            AGPL-3.0
+            SSPL-1.0
