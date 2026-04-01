@@ -38,7 +38,7 @@ jobs:
     name: Apply labels based on changed files
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v5
+      - uses: actions/labeler@v6
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           # Path to the labeller config file (defined below)

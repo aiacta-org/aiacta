@@ -62,13 +62,13 @@ jobs:
         # javascript covers both .js and .ts files
         language: ['javascript', 'go', 'python']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Initialize CodeQL with the language-specific query suite.
       # "security-and-quality" runs both security checks and
       # code quality rules (more than just "security").
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           queries: security-and-quality
@@ -76,12 +76,12 @@ jobs:
       # For JavaScript and Python, CodeQL auto-builds.
       # For Go, it needs to explicitly compile.
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
 
       # Run the analysis and upload results to the Security tab.
       # Results appear at: github.com/aiacta-org/aiacta/security/code-scanning
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
 
@@ -94,8 +94,8 @@ jobs:
     name: npm dependency scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           cache: 'npm'
@@ -124,7 +124,7 @@ jobs:
 
       - name: Upload audit results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-audit-weekly
           path: npm-audit.json
@@ -143,8 +143,8 @@ jobs:
     name: Go vulnerability scan (govulncheck)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.22'
           cache: true
@@ -167,8 +167,8 @@ jobs:
     name: Python dependency scan (pip-audit)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -183,7 +183,7 @@ jobs:
 
       - name: Upload audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pip-audit-weekly
           path: pip-audit.json
@@ -201,7 +201,7 @@ jobs:
     name: Secret scanning (truffleHog)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Full history so truffleHog can scan all commits
           fetch-depth: 0

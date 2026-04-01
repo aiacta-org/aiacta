@@ -66,8 +66,8 @@ jobs:
       dashboard: ${{ steps.filter.outputs.dashboard }}
       schemas:   ${{ steps.filter.outputs.schemas }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -122,12 +122,12 @@ jobs:
             db_path: ':memory:'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: Set up Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
           # Cache npm downloads between runs (~30s saved per run)
@@ -151,7 +151,7 @@ jobs:
       # Only upload coverage once — Node 20, aac-server package
       - name: Upload coverage report
         if: matrix.node == '20.x' && matrix.package == 'aac-server'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: packages/aac-server/coverage
@@ -173,10 +173,10 @@ jobs:
       matrix:
         go: ['1.21', '1.22']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Go ${{ matrix.go }}
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
           cache: true
@@ -223,10 +223,10 @@ jobs:
             src_dir: packages/crawl-manifest-client/src/python
             test_pattern: "packages/crawl-manifest-client/tests"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
@@ -254,8 +254,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           cache: 'npm'
@@ -293,8 +293,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           cache: 'npm'
@@ -307,7 +307,7 @@ jobs:
         env:
           NODE_ENV: production
       - name: Upload build artifact (7-day retention)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dashboard-dist-${{ github.sha }}
           path: packages/aac-dashboard-lite/dist/
@@ -323,8 +323,8 @@ jobs:
     name: npm security audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           cache: 'npm'
@@ -340,7 +340,7 @@ jobs:
         run: npm audit --json > npm-audit-report.json || true
 
       - name: Upload audit report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-audit-report
           path: npm-audit-report.json
@@ -360,7 +360,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Extract spec references and check docs
         run: |
           echo "=== Extracting §section references from source code ==="
@@ -400,8 +400,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
       - name: Install AJV schema validator

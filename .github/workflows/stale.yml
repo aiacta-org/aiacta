@@ -46,7 +46,7 @@ jobs:
     name: Mark and close stale issues/PRs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v9
+      - uses: actions/stale@v10
         with:
           # ── Authentication ──────────────────────────────
           # GITHUB_TOKEN is automatically available; no setup needed.
