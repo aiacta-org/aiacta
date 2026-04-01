@@ -1,0 +1,25 @@
+{
+  "name": "aiacta",
+  "author": "Eric Michel",
+  "private": true,
+  "workspaces": [
+    "packages/ai-attribution-lint",
+    "packages/ai-citation-sdk",
+    "packages/crawl-manifest-client",
+    "packages/aac-dashboard-lite",
+    "packages/attribution-test-harness",
+    "packages/aac-server",
+    "packages/vwp-gateway",
+    "packages/referrer-middleware",
+    "packages/honeypot-verifier"
+  ],
+  "scripts": {
+    "test": "npm --workspaces test --if-present",
+    "build": "npm --workspaces run build --if-present",
+    "lint": "npm --workspaces run lint --if-present"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "jest": "^29.0.0"
+  }
+}
