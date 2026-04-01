@@ -1,0 +1,24 @@
+{
+  "name": "aac-dashboard-lite",
+  "version": "1.0.0",
+  "author": "Eric Michel",
+  "description": "No-code citation analytics dashboard for publishers — self-hosted React app (AIACTA §3.7, §9.4 Lite Tier)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "recharts": "^2.0.0",
+    "axios": "^1.6.0",
+    "crawl-manifest-client": "*"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "vitest": "^1.0.0"
+  }
+}

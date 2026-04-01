@@ -1,0 +1,16 @@
+{
+  "name": "ai-attribution-lint",
+  "version": "1.0.0",
+  "description": "CLI validator for ai-attribution.txt files (AIACTA Proposal 4 §5.7)",
+  "author": "Eric Michel",
+  "bin": { "ai-attribution-lint": "./src/cli.js" },
+  "main": "./src/index.js",
+  "scripts": { "test": "jest" },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "spdx-license-ids": "^3.0.0",
+    "chalk": "^5.0.0",
+    "yargs": "^17.0.0"
+  },
+  "devDependencies": { "jest": "^29.0.0" }
+}

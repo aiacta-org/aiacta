@@ -1,0 +1,3 @@
+# ai-attribution.txt — INVALID fixture (triggers linter errors)
+Allow-Purpose: UNKNOWN-PURPOSE
+Content-License: NOT-A-VALID-SPDX-ID

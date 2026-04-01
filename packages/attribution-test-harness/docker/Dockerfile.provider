@@ -1,0 +1,5 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY docker/provider-server.js server.js
+RUN echo '{}' > package.json
+CMD ["node", "server.js"]

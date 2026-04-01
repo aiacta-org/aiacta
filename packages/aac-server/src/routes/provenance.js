@@ -1,0 +1,63 @@
+/**
+ * Provenance Query API for law enforcement and fact-checking (§9.5.1).
+ *
+ * POST /v1/provenance/query  — Submit a Proof-of-Inference token to trace content sources
+ * GET  /v1/provenance/audit-trail/:url  — Retrieve full citation audit trail for a URL
+ *
+ * Access requires an authorised law enforcement / fact-checker API key.
+ */
+'use strict';
+const express = require('express');
+const { getDb } = require('../db/database');
+
+const router = express.Router();
+
+// Middleware: validate LE/fact-checker API key
+router.use((req, res, next) => {
+  const key = req.headers['x-aiacta-provenance-key'];
+  if (!key || key !== process.env.PROVENANCE_API_KEY) {
+    return res.status(401).json({ error: 'Authorised access only — contact AAC governance body' });
+  }
+  next();
+});
+
+/**
+ * POST /v1/provenance/query
+ * Body: { poi_token: string, from?: string, to?: string }
+ * Returns the citation events associated with a Proof-of-Inference token.
+ */
+router.post('/query', (req, res) => {
+  const { poi_token, from, to } = req.body;
+  if (!poi_token) return res.status(400).json({ error: 'poi_token required' });
+  // In production: validate PoI token against provider's audit store (§3.4B)
+  const rows = getDb().prepare(`
+    SELECT event_id, provider_id, cited_url, citation_type, query_category, model, event_timestamp
+    FROM citation_events
+    WHERE idempotency_key LIKE ?
+      AND (? IS NULL OR event_timestamp >= ?)
+      AND (? IS NULL OR event_timestamp <= ?)
+    LIMIT 500
+  `).all(`%${poi_token}%`, from ?? null, from ?? null, to ?? null, to ?? null);
+  res.json({ poi_token, matched_events: rows, count: rows.length });
+});
+
+/**
+ * GET /v1/provenance/audit-trail/:url
+ * Returns all citation events for a given content URL — for copyright/fraud investigations.
+ */
+router.get('/audit-trail/:url(*)', (req, res) => {
+  const url = decodeURIComponent(req.params.url);
+  const rows = getDb().prepare(`
+    SELECT e.id, e.provider_id, p.name AS provider_name,
+           e.cited_url, e.citation_type, e.query_category,
+           e.model, e.event_timestamp
+    FROM citation_events e
+    LEFT JOIN providers p ON e.provider_id = p.id
+    WHERE e.cited_url = ?
+    ORDER BY e.event_timestamp DESC
+    LIMIT 1000
+  `).all(url);
+  res.json({ url, audit_trail: rows, count: rows.length });
+});
+
+module.exports = router;
