@@ -1,0 +1,13 @@
+{
+  "name": "vwp-gateway",
+  "version": "1.0.0",
+  "description": "Verifiable Webhook Protocol (VWP) gateway — Proof-of-Inference validation, anti-Sybil throttling, and fraud pattern detection (§3.4A-D)",
+  "author": "Eric Michel",
+  "main": "src/index.js",
+  "scripts": { "start": "node src/index.js", "test": "jest" },
+  "dependencies": {
+    "express": "^4.18.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": { "jest": "^29.0.0", "supertest": "^6.0.0" }
+}

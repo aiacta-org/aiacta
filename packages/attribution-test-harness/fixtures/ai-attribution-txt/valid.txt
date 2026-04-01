@@ -1,0 +1,14 @@
+# ai-attribution.txt — valid test fixture (AIACTA §5.3)
+Schema-Version: 1.0
+Contact: licensing@example.com
+Preferred-Attribution: Example Media (example.com)
+Allow-Purpose: rag
+Allow-Purpose: index
+Disallow-Purpose: training
+Require-Citation: true
+Citation-Format: title-and-url
+Allow-UTM-Append: true
+Citation-Webhook: https://example.com/webhooks/ai-citations
+Recrawl-After: 24h
+Reward-Tier: standard
+Content-License: CC-BY-SA-4.0
