@@ -1,0 +1,38 @@
+
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # 1. Keep GitHub Actions up to date (Security best practice)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions-updates:
+        patterns:
+          - "*"
+
+  # 2. Keep Node.js dependencies updated (IPFS, Arweave, Turbo SDK)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly" # Weekly is better for launch phase to avoid PR spam
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-type: "all"
+    # Group minor/patch updates together to keep your PR list clean
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # 3. If we add Dockerized validator or reference implementation
+  # - package-ecosystem: "docker"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
