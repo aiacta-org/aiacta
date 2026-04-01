@@ -10,6 +10,6 @@ app.get("/.well-known/aiacta.json", (req, res) => {
   });
 });
 
-app.listen(3000, () => {
-  console.log("AIACTA MVS server running on port 3000");
+app.listen(3100, () => {
+  console.log("AIACTA minimum server running on port 3100");
 });

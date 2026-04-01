@@ -113,7 +113,7 @@ from the [AIACTA v1.0 whitepaper](./publications/AIACTA_FrameworkV1_0_EricMichel
 ```bash
 # Minimal valid file
 cat > .well-known/ai-attribution.txt << 'EOF'
-Schema-Version: 1.0
+AIACTA-Version: 1.0
 Contact: licensing@yourdomain.com
 Preferred-Attribution: Your Site (yourdomain.com)
 Allow-Purpose: rag

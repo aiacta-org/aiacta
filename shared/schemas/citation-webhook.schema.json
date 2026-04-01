@@ -10,11 +10,21 @@
   "definitions": {
     "SingleEvent": {
       "type": "object",
-      "required": ["aiacta_version", "publisher", "base_url", "event_type", "event_id", "idempotency_key", "timestamp", "citation", "attribution"],
+      "required": [
+        "aiacta_version",
+        "publisher",
+        "base_url",
+        "event_type",
+        "event_id",
+        "idempotency_key",
+        "timestamp",
+        "citation",
+        "attribution"
+      ],
       "properties": {
-        "aiacta_version": { "type": "string", "enum": ["1.0"] },    
-        "publisher": {"type": "string"},
-        "base_url": {"type": "string", "format": "uri"},
+        "aiacta_version": { "type": "string", "enum": ["1.0"] },
+        "publisher": { "type": "string" },
+        "base_url": { "type": "string", "format": "uri" },
         "contact": { "type": "array", "items": { "type": "string" } },
         "event_type": { "type": "string", "enum": ["citation.generated"] },
         "event_id": { "type": "string" },
@@ -25,7 +35,10 @@
           "required": ["url", "citation_type"],
           "properties": {
             "url": { "type": "string", "format": "uri" },
-            "citation_type": { "type": "string", "enum": ["factual_source", "recommendation", "tool-result"] },
+            "citation_type": {
+              "type": "string",
+              "enum": ["factual_source", "recommendation", "tool-result"]
+            },
             "context_summary": { "type": "string", "maxLength": 500 },
             "query_category_l1": { "type": "string" },
             "query_category_l2": { "type": "string" },
@@ -37,19 +50,29 @@
         "attribution": {
           "type": "object",
           "properties": {
-            "display_type": { "type": "string", "enum": ["inline_link", "footnote", "none"] },
-            "user_interface": { "type": "string", "enum": ["chat", "search", "api"] }
+            "display_type": {
+              "type": "string",
+              "enum": ["inline_link", "footnote", "none"]
+            },
+            "user_interface": {
+              "type": "string",
+              "enum": ["chat", "search", "api"]
+            }
           }
         }
       }
     },
     "BatchPayload": {
       "type": "object",
-      "required": ["batch_id", "schema_version", "events"],
+      "required": ["batch_id", "aiacta_version", "events"],
       "properties": {
         "batch_id": { "type": "string" },
-        "schema_version": { "type": "string", "enum": ["1.0"] },
-        "events": { "type": "array", "items": { "$ref": "#/definitions/SingleEvent" }, "maxItems": 100 }
+        "aiacta_version": { "type": "string", "enum": ["1.0"] },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SingleEvent" },
+          "maxItems": 100
+        }
       }
     }
   }

@@ -19,7 +19,7 @@ const AUTHOR_CONFIG = {
 
 // ── Serve ai-attribution.txt from /.well-known/ ───────────────────────────
 export function handleAttributionTxt(request) {
-  const content = `Schema-Version: 1.0
+  const content = `AIACTA-Version: 1.0
 Contact: ${AUTHOR_CONFIG.licensingContact}
 Preferred-Attribution: ${AUTHOR_CONFIG.preferredAttribution}
 Allow-Purpose: rag

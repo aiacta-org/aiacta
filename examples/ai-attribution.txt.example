@@ -4,7 +4,7 @@
 #
 # Validate with: npx ai-attribution-lint https://yourdomain.com
 
-Schema-Version: 1.0
+AIACTA-Version: 1.0
 
 # ── Contact ──────────────────────────────────────────────────────────────────
 Contact: ai-licensing@yourdomain.com
