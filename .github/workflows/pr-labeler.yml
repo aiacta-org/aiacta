@@ -17,10 +17,6 @@
 #    .github/**                       → "ci/cd"
 #    *.md                             → "documentation"
 #
-#  REQUIRES:
-#  Create a .github/labeler.yml config file (below this workflow).
-#  The labels must already exist in your repository
-#  (Settings → Labels → create each label).
 # ============================================================
 
 name: Label PRs

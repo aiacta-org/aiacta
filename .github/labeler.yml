@@ -8,19 +8,9 @@
 #  When any changed file in a PR matches a pattern, that
 #  label is applied to the PR automatically.
 #
-#  BEFORE THIS WORKS:
-#  Create all these labels at:
+#  See all these labels at:
 #  https://github.com/aiacta-org/aiacta/labels
 #
-#  Suggested colours:
-#    package: sdk       → #0075ca (blue)
-#    package: linter    → #e4e669 (yellow)
-#    package: aac       → #d73a4a (red)
-#    documentation      → #0075ca (blue)
-#    security           → #ee0701 (bright red)
-#    ci/cd              → #7057ff (purple)
-#    spec-change        → #e11d48 (rose)
-#    schema             → #f9c74f (amber)
 # ============================================================
 
 "package: linter":
