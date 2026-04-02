@@ -66,8 +66,8 @@ jobs:
       dashboard: ${{ steps.filter.outputs.dashboard }}
       schemas:   ${{ steps.filter.outputs.schemas }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v4
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -122,19 +122,19 @@ jobs:
             db_path: ':memory:'
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: Set up Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
           # Cache npm downloads between runs (~30s saved per run)
           # cache: 'npm'
 
       - name: Install dependencies
-        run: nmp install
+        run: npm install
 
       # Run the test for this specific package only
       - name: Run tests — ${{ matrix.package }}
@@ -149,7 +149,7 @@ jobs:
       # Only upload coverage once — Node 20, aac-server package
       - name: Upload coverage report
         if: matrix.node == '20.x' && matrix.package == 'aac-server'
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: packages/aac-server/coverage
@@ -171,10 +171,10 @@ jobs:
       matrix:
         go: ['1.21', '1.22']
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Go ${{ matrix.go }}
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
           #cache: true
@@ -207,7 +207,7 @@ jobs:
   # Three packages × three Python versions = 9 parallel jobs.
   # ──────────────────────────────────────────────────────────────
   test-python:
-    name: "Python ${{ matrix.python }} — ${{ matrix.package }}"
+    name: "Python ${{ matrix.python }} — ${{ matrix.package_name }}"
     runs-on: ubuntu-latest
     needs: [changes]
     strategy:
@@ -222,14 +222,14 @@ jobs:
             src_dir: packages/crawl-manifest-client/src/python
             test_pattern: "packages/crawl-manifest-client/tests"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
-          cache-dependency-path: ${{ matrix.package.requirements }}
+          cache-dependency-path: ${{ matrix.requirements }}
 
       - name: Install dependencies
         working-directory: ${{ matrix.src_dir }}
@@ -254,15 +254,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           # cache: 'npm'
 
        # npm install at root (installs the lint package via workspaces)
       - name: Install linter dependencies
-        run: nmp install
+        run: npm install
         working-directory: packages/ai-attribution-lint
 
       - name: Valid fixture — must return exit 0
@@ -295,13 +295,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           # cache: 'npm'
       - name: Install dependencies
-        run: nmp install
+        run: npm install
         working-directory: packages/aac-dashboard-lite
       - name: Build (Vite production)
         run: npm run build
@@ -309,7 +309,7 @@ jobs:
         env:
           NODE_ENV: production
       - name: Upload build artifact (7-day retention)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: dashboard-dist-${{ github.sha }}
           path: packages/aac-dashboard-lite/dist/
@@ -325,8 +325,8 @@ jobs:
     name: npm security audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           # cache: 'npm'
@@ -343,7 +343,7 @@ jobs:
         run: npm audit --json > npm-audit-report.json || true
 
       - name: Upload audit report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: npm-audit-report
           path: npm-audit-report.json
@@ -414,10 +414,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       # FIX 1: No cache: 'npm'
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
       - name: Install AJV schema validator

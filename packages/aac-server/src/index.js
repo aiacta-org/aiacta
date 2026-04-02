@@ -39,7 +39,7 @@ app.use((err, req, res, _next) => {
 // Synchronous init — must complete before accepting connections
 if (require.main === module) {
   initDb();
-  const PORT = process.env.PORT || 4000;
+  const PORT = process.env.PORT || 3100;
   app.listen(PORT, () => console.log(`[aac-server] Listening on :${PORT}`));
 }
 

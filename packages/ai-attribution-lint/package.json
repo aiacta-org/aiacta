@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "CLI validator for ai-attribution.txt files (AIACTA Proposal 4 §5.7)",
   "author": "Eric Michel",
+  "license": "Apache-2.0",
   "bin": { "ai-attribution-lint": "./src/cli.js" },
   "main": "./src/index.js",
   "scripts": { "test": "jest" },
