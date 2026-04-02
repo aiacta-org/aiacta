@@ -1,5 +1,5 @@
 {
-  "aiacta_version": "1.0",
+  "schema_version": "1.0",
   "publisher": "Example Inc.",
   "base_url": "https://example.com",
   "contact": "contact@example.com"

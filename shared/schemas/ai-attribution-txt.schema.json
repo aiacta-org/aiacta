@@ -4,26 +4,45 @@
   "title": "AIACTA ai-attribution.txt Parsed Fields",
   "description": "Parsed field model for ai-attribution.txt (Proposal 4 §5.3–5.4)",
   "type": "object",
-  "required": ["aiacta_version", "publisher", "base_url"],
+  "required": ["schema_version", "publisher", "base_url"],
   "properties": {
-    "aiacta_version": { "type": "string", "enum": ["1.0"] },    
-    "publisher": {"type": "string"},
-    "base_url": {"type": "string", "format": "uri"},
+    "schema_version": { "type": "string", "enum": ["1.0"] },
+    "publisher": { "type": "string" },
+    "base_url": { "type": "string", "format": "uri" },
     "contact": { "type": "array", "items": { "type": "string" } },
     "preferredAttribution": { "type": "string" },
     "canonicalAuthor": { "type": "string" },
-    "allowPurpose": { "type": "array", "items": { "type": "string", "enum": ["training", "rag", "index", "quality-eval"] } },
-    "disallowPurpose": { "type": "array", "items": { "type": "string", "enum": ["training", "rag", "index", "quality-eval"] } },
+    "allowPurpose": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["training", "rag", "index", "quality-eval"]
+      }
+    },
+    "disallowPurpose": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["training", "rag", "index", "quality-eval"]
+      }
+    },
     "requireCitation": { "type": "boolean", "default": false },
     "requireSourceLink": { "type": "boolean", "default": false },
-    "citationFormat": { "type": "string", "enum": ["title-only", "url-only", "title-and-url", "author-title-url"], "default": "title-and-url" },
+    "citationFormat": {
+      "type": "string",
+      "enum": ["title-only", "url-only", "title-and-url", "author-title-url"],
+      "default": "title-and-url"
+    },
     "allowUtmAppend": { "type": "boolean", "default": false },
     "preferredUtmSource": { "type": "string" },
     "citationWebhook": { "type": "string", "format": "uri" },
     "recrawlAfter": { "type": "string", "pattern": "^[0-9]+(h|d|w)$" },
     "licensingContact": { "type": "string" },
     "licensingUrl": { "type": "string", "format": "uri" },
-    "rewardTier": { "type": "string", "enum": ["standard", "premium", "licensing-only", "none"] },
+    "rewardTier": {
+      "type": "string",
+      "enum": ["standard", "premium", "licensing-only", "none"]
+    },
     "contentLicense": { "type": "string" }
   }
 }

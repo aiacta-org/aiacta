@@ -11,7 +11,7 @@
     "SingleEvent": {
       "type": "object",
       "required": [
-        "aiacta_version",
+        "schema_version",
         "publisher",
         "base_url",
         "event_type",
@@ -22,7 +22,7 @@
         "attribution"
       ],
       "properties": {
-        "aiacta_version": { "type": "string", "enum": ["1.0"] },
+        "schema_version": { "type": "string", "enum": ["1.0"] },
         "publisher": { "type": "string" },
         "base_url": { "type": "string", "format": "uri" },
         "contact": { "type": "array", "items": { "type": "string" } },
@@ -64,10 +64,10 @@
     },
     "BatchPayload": {
       "type": "object",
-      "required": ["batch_id", "aiacta_version", "events"],
+      "required": ["batch_id", "schema_version", "events"],
       "properties": {
         "batch_id": { "type": "string" },
-        "aiacta_version": { "type": "string", "enum": ["1.0"] },
+        "schema_version": { "type": "string", "enum": ["1.0"] },
         "events": {
           "type": "array",
           "items": { "$ref": "#/definitions/SingleEvent" },

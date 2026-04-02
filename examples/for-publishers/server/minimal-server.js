@@ -21,7 +21,7 @@ const AIACTA_CONFIG = {
 // GET /.well-known/aiacta.json
 app.get("/.well-known/aiacta.json", (req, res) => {
   res.json({
-    aiacta_version: "1.0",
+    schema_version: "1.0",
     publisher: AIACTA_CONFIG.publisher,
     base_url: AIACTA_CONFIG.base_url,
     contact: AIACTA_CONFIG.contact

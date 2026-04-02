@@ -4,12 +4,19 @@
   "title": "AIACTA Crawl Manifest Response",
   "description": "Response schema for GET /crawl-manifest/v1 (Proposal 1 §2.3)",
   "type": "object",
-  "required": ["aiacta_version", "publisher", "base_url", "period", "total_crawled_urls", "urls"],
+  "required": [
+    "schema_version",
+    "publisher",
+    "base_url",
+    "period",
+    "total_crawled_urls",
+    "urls"
+  ],
   "properties": {
-    "aiacta_version": { "type": "string", "enum": ["1.0"] },    
-    "publisher": {"type": "string"},
-    "base_url": {"type": "string", "format": "uri"},
-    "contact": {"type": "string"},
+    "schema_version": { "type": "string", "enum": ["1.0"] },
+    "publisher": { "type": "string" },
+    "base_url": { "type": "string", "format": "uri" },
+    "contact": { "type": "string" },
     "period": {
       "type": "object",
       "required": ["from", "to"],
@@ -24,14 +31,24 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["url", "last_crawled", "crawl_count_30d", "purpose", "http_status_at_crawl", "content_hash"],
+        "required": [
+          "url",
+          "last_crawled",
+          "crawl_count_30d",
+          "purpose",
+          "http_status_at_crawl",
+          "content_hash"
+        ],
         "properties": {
           "url": { "type": "string", "format": "uri" },
           "last_crawled": { "type": "string", "format": "date-time" },
           "crawl_count_30d": { "type": "integer", "minimum": 0 },
           "purpose": {
             "type": "array",
-            "items": { "type": "string", "enum": ["training", "rag", "index", "quality-eval"] }
+            "items": {
+              "type": "string",
+              "enum": ["training", "rag", "index", "quality-eval"]
+            }
           },
           "http_status_at_crawl": { "type": "integer" },
           "content_hash": { "type": "string", "pattern": "^sha256:[a-f0-9]+$" }

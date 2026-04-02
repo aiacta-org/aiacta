@@ -60,7 +60,7 @@ This is what will drive mass adoption.
 
 2. Paste:
 {
-  "aiacta_version": "1.0",
+  "schema_version": "1.0",
   "publisher": "Your Company Name",
   "base_url": "https://yourdomain.com",
   "contact": "email@yourdomain.com"
