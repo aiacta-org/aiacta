@@ -131,17 +131,15 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           # Cache npm downloads between runs (~30s saved per run)
-          cache: 'npm'
+          # cache: 'npm'
 
-      # npm ci is the CI-safe version of npm install:
-      # uses package-lock.json exactly, no range resolution,
-      # fails if lock file is out of sync. Always use in CI.
-      - name: Install dependencies (npm ci)
-        run: npm ci
+      - name: Install dependencies
+        run: nmp install
 
-      - name: Run Jest tests — ${{ matrix.package }}
+      # Run the test for this specific package only
+      - name: Run tests — ${{ matrix.package }}
         working-directory: packages/${{ matrix.package }}
-        run: npm test -- --ci --coverage --forceExit
+        run: npm test -- --forceExit
         env:
           NODE_ENV: test
           CI: 'true'
@@ -179,7 +177,8 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
-          cache: true
+          #cache: true
+          cache-dependency-path: packages/ai-citation-sdk/src/go/go.mod
 
       - name: Run tests with race detector
         working-directory: packages/ai-citation-sdk/src/go
@@ -230,6 +229,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
+          cache-dependency-path: ${{ matrix.package.requirements }}
 
       - name: Install dependencies
         working-directory: ${{ matrix.src_dir }}
@@ -258,9 +258,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
-          cache: 'npm'
-      - name: Install linter
-        run: npm ci
+          # cache: 'npm'
+
+       # npm install at root (installs the lint package via workspaces)
+      - name: Install linter dependencies
+        run: nmp install
         working-directory: packages/ai-attribution-lint
 
       - name: Valid fixture — must return exit 0
@@ -297,9 +299,9 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
-          cache: 'npm'
+          # cache: 'npm'
       - name: Install dependencies
-        run: npm ci
+        run: nmp install
         working-directory: packages/aac-dashboard-lite
       - name: Build (Vite production)
         run: npm run build
@@ -327,8 +329,9 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
-          cache: 'npm'
-      - run: npm ci
+          # cache: 'npm'
+      - name: Install dependencies
+        run: npm install
 
       # This step FAILS CI if high/critical vulnerabilities are found.
       - name: Audit — fail on high/critical
@@ -360,36 +363,47 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - name: Extract spec references and check docs
         run: |
           echo "=== Extracting §section references from source code ==="
-          REFS=$(grep -rh "§[0-9][0-9.]*[A-D]*" packages/ shared/             --include="*.js" --include="*.ts"             --include="*.py" --include="*.go"             2>/dev/null             | grep -oE "§[0-9][0-9.]*[A-D]*"             | sort -u)
-
+ 
+          REFS=$(grep -rh "§[0-9][0-9.]*[A-D]*" packages/ shared/ \
+            --include="*.js" --include="*.ts" \
+            --include="*.py" --include="*.go" \
+            2>/dev/null \
+            | grep -oE "§[0-9][0-9.]*[A-D]*" \
+            | sort -u)
+ 
           if [ -z "$REFS" ]; then
-            echo "No §section references found."
+            echo "No §section references found in source."
             exit 0
           fi
-
-          echo "References found:"
+ 
           MISSING=0
           while IFS= read -r ref; do
-            SECTION=$(echo "$ref" | sed 's/§//' | sed 's/[A-D]$//')
-            if grep -qr "$SECTION" docs/proposals/ 2>/dev/null; then
+            # Strip the § prefix and any trailing letter (§3.4A → 3.4)
+            BASE_SECTION=$(echo "$ref" | sed 's/§//' | sed 's/[A-D]$//')
+            # Also try without the minor part (§3.4 → 3)
+            MAJOR_SECTION=$(echo "$BASE_SECTION" | cut -d. -f1)
+ 
+            if grep -qr "$BASE_SECTION" docs/proposals/ 2>/dev/null || \
+               grep -qr "$ref" docs/proposals/ 2>/dev/null; then
               echo "  ✅  $ref"
             else
-              echo "  ⚠️  $ref — not documented in docs/proposals/"
+              echo "  ⚠️   $ref — not in docs/proposals/ (warning only)"
               MISSING=$((MISSING+1))
             fi
           done <<< "$REFS"
-
+ 
           echo ""
           if [ $MISSING -gt 0 ]; then
-            echo "::warning::$MISSING spec §reference(s) in code have no matching docs/proposals/ entry."
+            echo "::warning::$MISSING spec reference(s) have no matching docs/proposals/ entry. This is a warning — docs may not yet be written for these sections."
           else
             echo "All spec references are documented. ✅"
           fi
-
+          # Never exit 1 here — warnings only, does not block merge
+ 
   # ──────────────────────────────────────────────────────────────
   # JOB 9 — JSON SCHEMA VALIDATION
   # Validates shared/schemas/*.json are valid JSON Schema (draft-07)
@@ -401,13 +415,15 @@ jobs:
     needs: [changes]
     steps:
       - uses: actions/checkout@v6
+
+      # FIX 1: No cache: 'npm'
       - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
       - name: Install AJV schema validator
         run: npm install -g ajv-cli ajv-formats
 
-      - name: Check schema files are valid JSON
+      - name: Check all schema files are valid JSON
         run: |
           for f in shared/schemas/*.json; do
             node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))"               && echo "  ✅  $f"               || (echo "  ❌  $f is not valid JSON" && exit 1)

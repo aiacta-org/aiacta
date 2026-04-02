@@ -1,8 +1,23 @@
 {
-  "provider": "mock-provider", "domain": "example.com", "schema_version": "1.0",
-  "period": { "from": "2026-01-01T00:00:00Z", "to": "2026-03-24T00:00:00Z" },
-  "total_crawled_urls": 1, "next_cursor": null,
-  "urls": [{ "url": "https://example.com/articles/how-transformers-work",
-             "last_crawled": "2026-03-10T14:22:05Z", "crawl_count_30d": 3,
-             "purpose": ["rag"], "http_status_at_crawl": 200, "content_hash": "sha256:4f7e3abc" }]
+  "provider": "mock-provider",
+  "domain": "example.com",
+  "schema_version": "1.0",
+  "period": {
+    "from": "2026-01-01T00:00:00Z",
+    "to": "2026-03-24T00:00:00Z"
+  },
+  "total_crawled_urls": 1,
+  "next_cursor": null,
+  "urls": [
+    {
+      "url": "https://example.com/articles/how-transformers-work",
+      "last_crawled": "2026-03-10T14:22:05Z",
+      "crawl_count_30d": 3,
+      "purpose": [
+        "rag"
+      ],
+      "http_status_at_crawl": 200,
+      "content_hash": "sha256:4f7e3abc11223344556677889900aabbccddeeff11223344556677889900aabb"
+    }
+  ]
 }

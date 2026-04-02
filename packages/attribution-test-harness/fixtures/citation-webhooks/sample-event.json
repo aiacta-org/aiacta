@@ -1,11 +1,22 @@
 {
-  "schema_version": "1.0", "provider": "mock-provider",
-  "event_type": "citation.generated", "event_id": "evt_01TEST000",
-  "idempotency_key": "idem_01TEST_fixture", "timestamp": "2026-03-24T09:14:00Z",
-  "citation": { "url": "https://example.com/articles/how-transformers-work",
+  "schema_version": "1.0",
+  "provider": "mock-provider",
+  "event_type": "citation.generated",
+  "event_id": "evt_01TEST000000000000000000",
+  "idempotency_key": "idem_01TEST_fixture",
+  "timestamp": "2026-03-24T09:14:00Z",
+  "citation": {
+    "url": "https://example.com/articles/how-transformers-work",
     "citation_type": "factual_source",
     "context_summary": "Used to answer question about self-attention mechanism",
-    "query_category_l1": "technology", "model": "mock-model-v1",
-    "response_locale": "en-US", "user_country": "US" },
-  "attribution": { "display_type": "inline_link", "user_interface": "chat" }
+    "query_category_l1": "technology",
+    "query_category_l2": "machine_learning",
+    "model": "mock-model-v1",
+    "response_locale": "en-US",
+    "user_country": "US"
+  },
+  "attribution": {
+    "display_type": "inline_link",
+    "user_interface": "chat"
+  }
 }

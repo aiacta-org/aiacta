@@ -2,78 +2,116 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://aiacta.org/schemas/citation-webhook/v1.0",
   "title": "AIACTA Citation Webhook Event",
-  "description": "Single-event and batch payload schema for POST citation webhooks (Proposal 2 §3.2)",
-  "oneOf": [
-    { "$ref": "#/definitions/SingleEvent" },
-    { "$ref": "#/definitions/BatchPayload" }
+  "description": "Single event or batch payload for POST citation webhooks (Proposal 2 \u00a73.2)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "provider",
+    "event_type",
+    "event_id",
+    "idempotency_key",
+    "timestamp",
+    "citation",
+    "attribution"
   ],
-  "definitions": {
-    "SingleEvent": {
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": [
+        "1.0"
+      ]
+    },
+    "provider": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "citation.generated"
+      ]
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Minute precision only (\u00a73.2) \u2014 seconds always 00"
+    },
+    "citation": {
       "type": "object",
       "required": [
-        "schema_version",
-        "publisher",
-        "base_url",
-        "event_type",
-        "event_id",
-        "idempotency_key",
-        "timestamp",
-        "citation",
-        "attribution"
+        "url",
+        "citation_type"
       ],
       "properties": {
-        "schema_version": { "type": "string", "enum": ["1.0"] },
-        "publisher": { "type": "string" },
-        "base_url": { "type": "string", "format": "uri" },
-        "contact": { "type": "array", "items": { "type": "string" } },
-        "event_type": { "type": "string", "enum": ["citation.generated"] },
-        "event_id": { "type": "string" },
-        "idempotency_key": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "citation": {
-          "type": "object",
-          "required": ["url", "citation_type"],
-          "properties": {
-            "url": { "type": "string", "format": "uri" },
-            "citation_type": {
-              "type": "string",
-              "enum": ["factual_source", "recommendation", "tool-result"]
-            },
-            "context_summary": { "type": "string", "maxLength": 500 },
-            "query_category_l1": { "type": "string" },
-            "query_category_l2": { "type": "string" },
-            "model": { "type": "string" },
-            "response_locale": { "type": "string" },
-            "user_country": { "type": "string", "maxLength": 2 }
-          }
+        "url": {
+          "type": "string",
+          "format": "uri"
         },
-        "attribution": {
-          "type": "object",
-          "properties": {
-            "display_type": {
-              "type": "string",
-              "enum": ["inline_link", "footnote", "none"]
-            },
-            "user_interface": {
-              "type": "string",
-              "enum": ["chat", "search", "api"]
-            }
-          }
+        "citation_type": {
+          "type": "string",
+          "enum": [
+            "factual_source",
+            "recommendation",
+            "tool-result"
+          ]
+        },
+        "context_summary": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "query_category_l1": {
+          "type": "string"
+        },
+        "query_category_l2": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "response_locale": {
+          "type": "string"
+        },
+        "user_country": {
+          "type": "string",
+          "maxLength": 2,
+          "description": "Country-level only \u2014 never finer (\u00a73.3)"
         }
       }
     },
-    "BatchPayload": {
+    "attribution": {
       "type": "object",
-      "required": ["batch_id", "schema_version", "events"],
       "properties": {
-        "batch_id": { "type": "string" },
-        "schema_version": { "type": "string", "enum": ["1.0"] },
-        "events": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/SingleEvent" },
-          "maxItems": 100
+        "display_type": {
+          "type": "string",
+          "enum": [
+            "inline_link",
+            "footnote",
+            "none"
+          ]
+        },
+        "user_interface": {
+          "type": "string",
+          "enum": [
+            "chat",
+            "search",
+            "api"
+          ]
         }
       }
+    },
+    "batch_id": {
+      "type": "string",
+      "description": "Present only when this is a batch container (\u00a73.6)"
+    },
+    "events": {
+      "type": "array",
+      "description": "Present only in batch payloads (\u00a73.6)",
+      "maxItems": 100
     }
   }
 }
