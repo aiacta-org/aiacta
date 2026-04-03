@@ -20,33 +20,6 @@
 #  be published on Thursday. Weekly scanning catches these between
 #  releases.
 #
-#  FIXES IN THIS VERSION:
-#
-#  FIX 1 — action versions
-#    All @v6, @v7, @v8 → correct current versions
-#    (checkout@v4, setup-node@v4, setup-go@v5, setup-python@v5,
-#     upload-artifact@v4, codeql@v3)
-#
-#  FIX 2 — npm dependency scan: "lock file not found"
-#    `npm ci` requires package-lock.json. Changed to `npm install`.
-#    Removed `cache: 'npm'` which also requires a lock file.
-#
-#  FIX 3 — govulncheck "go.mod not found" (cache restore fail)
-#    setup-go with `cache: true` looks for go.mod at repo root.
-#    Our go.mod is at packages/ai-citation-sdk/src/go/go.mod.
-#    Added: cache-dependency-path pointing to the correct location.
-#
-#  FIX 4 — govulncheck exit code 3 (stdlib vulnerabilities)
-#    govulncheck found CVEs in Go stdlib reachable from our code
-#    (syscall.Open, os.NewFile via fmt.init). These are real CVEs
-#    in Go 1.21/1.22 stdlib, not false positives.
-#    Fix: use go-version: 'stable' to always use the latest patched
-#    Go release which has these vulnerabilities fixed. Also added
-#    continue-on-error: false so genuine new CVEs still block CI,
-#    but the scanning step uses the latest Go to avoid old-stdlib hits.
-#
-#  FIX 5 — Node.js 20 deprecation warnings
-#    Added FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 # ============================================================
 
 name: Security

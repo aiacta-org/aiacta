@@ -1,10 +1,14 @@
 /**
  * Provenance Query API for law enforcement and fact-checking (§9.5.1).
  *
- * POST /v1/provenance/query  — Submit a Proof-of-Inference token to trace content sources
- * GET  /v1/provenance/audit-trail/:url  — Retrieve full citation audit trail for a URL
+ * POST /v1/provenance/query             — Submit a PoI token to trace content sources
+ * GET  /v1/provenance/audit-trail/*url  — Full citation audit trail for a URL
  *
  * Access requires an authorised law enforcement / fact-checker API key.
+ *
+ * NOTE on route syntax (Express 5 + path-to-regexp v8):
+ *   Old Express 4 syntax  :url(.*)  — BROKEN in path-to-regexp v8
+ *   New Express 5 syntax  *url      — named wildcard, captures everything
  */
 'use strict';
 const express = require('express');
@@ -24,12 +28,10 @@ router.use((req, res, next) => {
 /**
  * POST /v1/provenance/query
  * Body: { poi_token: string, from?: string, to?: string }
- * Returns the citation events associated with a Proof-of-Inference token.
  */
 router.post('/query', (req, res) => {
   const { poi_token, from, to } = req.body;
   if (!poi_token) return res.status(400).json({ error: 'poi_token required' });
-  // In production: validate PoI token against provider's audit store (§3.4B)
   const rows = getDb().prepare(`
     SELECT event_id, provider_id, cited_url, citation_type, query_category, model, event_timestamp
     FROM citation_events
@@ -42,10 +44,14 @@ router.post('/query', (req, res) => {
 });
 
 /**
- * GET /v1/provenance/audit-trail/:url
- * Returns all citation events for a given content URL — for copyright/fraud investigations.
+ * GET /v1/provenance/audit-trail/*url
+ * Returns all citation events for a given content URL.
+ *
+ * Express 5 / path-to-regexp v8 wildcard syntax:
+ *   *url  — named wildcard parameter, accessed via req.params.url
+ *   This replaces the old :url(.*) syntax which throws in path-to-regexp v8.
  */
-router.get('/audit-trail/:url(.*)', (req, res) => {
+router.get('/audit-trail/*url', (req, res) => {
   const url = decodeURIComponent(req.params.url);
   const rows = getDb().prepare(`
     SELECT e.id, e.provider_id, p.name AS provider_name,

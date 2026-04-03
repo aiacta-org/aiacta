@@ -202,7 +202,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          python -m pytest ${{ matrix.test_file }} \
+          python -m pytest ${{ matrix.test_file }} --import-mode=importlib \
             -v --tb=short -x \
             --no-header --color=no
         env:
