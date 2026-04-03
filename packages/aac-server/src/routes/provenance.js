@@ -45,7 +45,7 @@ router.post('/query', (req, res) => {
  * GET /v1/provenance/audit-trail/:url
  * Returns all citation events for a given content URL — for copyright/fraud investigations.
  */
-router.get('/audit-trail/:url(*)', (req, res) => {
+router.get('/audit-trail/:url(.*)', (req, res) => {
   const url = decodeURIComponent(req.params.url);
   const rows = getDb().prepare(`
     SELECT e.id, e.provider_id, p.name AS provider_name,

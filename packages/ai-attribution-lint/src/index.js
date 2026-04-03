@@ -10,7 +10,7 @@ const { runRules } = require('./runner');
 async function lint(target, opts = {}) {
   const raw = await fetchContent(target);
   const parsed = parse(raw);
-  return runRules(parsed, target, opts);
+  return await runRules(parsed, target, opts);
 }
 
 module.exports = { lint };

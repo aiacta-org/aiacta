@@ -88,22 +88,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-tag]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'npm'
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: true
-      - uses: actions/setup-python@v6
+          cache-dependency-path: packages/ai-citation-sdk/src/go/go.mod
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install npm dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run all Node.js tests
         run: npm test --workspaces --if-present
@@ -146,19 +144,16 @@ jobs:
       url: https://www.npmjs.com/package/ai-attribution-lint
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js with npm registry auth
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          # registry-url tells setup-node to configure .npmrc
-          # so that npm publish uses this registry with auth
           registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       # Verify the package.json version matches the git tag.
       # Prevents publishing version 1.0.0 when the tag is v1.1.0.
@@ -215,10 +210,10 @@ jobs:
       url: https://pypi.org/project/ai-citation-sdk/
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -254,12 +249,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-tag, test]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'npm'
-      - run: npm ci
+      - run: npm install
         working-directory: packages/aac-dashboard-lite
       - run: npm run build
         working-directory: packages/aac-dashboard-lite
@@ -274,7 +268,7 @@ jobs:
           echo "Created aac-dashboard-$VERSION.zip"
 
       - name: Save dashboard zip as artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: dashboard-release-zip
           path: "aac-dashboard-*.zip"
@@ -296,7 +290,7 @@ jobs:
       - build-dashboard-release
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           # Full history needed to read CHANGELOG.md
           fetch-depth: 0
@@ -323,7 +317,7 @@ jobs:
 
       # Download the dashboard zip that job 5 created
       - name: Download dashboard artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: dashboard-release-zip
           path: ./release-assets/
