@@ -59,7 +59,14 @@ function initDb() {
     CREATE TABLE IF NOT EXISTS citation_events (
       id              TEXT PRIMARY KEY,
       idempotency_key TEXT NOT NULL UNIQUE,
-      provider_id     TEXT NOT NULL REFERENCES providers(id),
+      -- provider_id is a plain string label, NOT a foreign key.
+      -- Citation events arrive from AI providers who may not be formally
+      -- enrolled yet. Enforcing a FK here rejects legitimate events and
+      -- causes SQLITE_CONSTRAINT_FOREIGNKEY on every ingest from an
+      -- unenrolled provider string (e.g. 'test-provider', 'anthropic').
+      -- The providers table is joined in queries that need the full record
+      -- (distribution calc, audit reports) but is not required at ingest.
+      provider_id     TEXT NOT NULL,
       publisher_id    TEXT REFERENCES publishers(id),
       cited_url       TEXT NOT NULL,
       citation_type   TEXT NOT NULL,
