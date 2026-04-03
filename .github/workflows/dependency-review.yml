@@ -39,7 +39,7 @@ jobs:
     name: Review dependency changes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       # actions/dependency-review-action compares the dependency
       # tree before and after the PR, and fails if any new
@@ -57,20 +57,12 @@ jobs:
           comment-summary-in-pr: always
           # Allow specific licences. Adjust this list based on your
           # legal team's approved licence list.
-          allow-licenses: |
-            MIT
-            Apache-2.0
-            BSD-2-Clause
-            BSD-3-Clause
-            ISC
-            0BSD
+          allow-licenses: >-
+            Apache-2.0,
+            MIT,
+            BSD-2-Clause,
+            BSD-3-Clause,
+            ISC,
+            0BSD,
             Unlicense
-          # Block any dependency with a licence not in the allow list.
-          # This prevents accidentally pulling in GPL or proprietary code.
-          deny-licenses: |
-            GPL-2.0
-            GPL-3.0
-            LGPL-2.0
-            LGPL-2.1
-            AGPL-3.0
-            SSPL-1.0
+            

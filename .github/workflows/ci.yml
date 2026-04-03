@@ -1,45 +1,6 @@
 # ============================================================
 #  ci.yml  —  AIACTA Main Continuous Integration Workflow
 # ============================================================
-#
-#  FIXES IN THIS VERSION:
-#
-#  FIX 1 — Python exit code 5 (no tests collected)
-#    Root cause A: matrix include rows had no python: key so
-#      GitHub Actions couldn't merge them with the python list.
-#    Root cause B: ai-citation-sdk/src/python has ZERO Python test
-#      files. Only crawl-manifest-client has Python tests.
-#    Fix: 3 explicit fully self-contained rows, one per Python
-#      version, all pointing to crawl-manifest-client tests.
-#
-#  FIX 2 — Go exit code 1 (gofmt hard-fail)
-#    Root cause: struct tag alignment in aiacta.go needs gofmt.
-#      gofmt -l . outputs the file -> UNFORMATTED non-empty -> exit 1.
-#    Fix: gofmt check is now WARNING ONLY (no exit 1).
-#      go test and go vet still block CI on real failures.
-#
-#  FIX 3 — Build React dashboard exit code 1
-#    Root cause: npm install ran inside packages/aac-dashboard-lite.
-#      crawl-manifest-client is a workspace package that npm can't
-#      resolve from a subdirectory install.
-#    Fix: npm install runs at REPO ROOT (no working-directory).
-#
-#  FIX 4 — Validate fixtures exit code 2
-#    Root cause A: npm install in wrong directory (same as Fix 3).
-#    Root cause B: path ../../attribution-test-harness/ from
-#      packages/ai-attribution-lint resolves to <root>/attribution-test-harness/
-#      which does NOT exist. Correct: packages/attribution-test-harness/.
-#    Fix: install at root; use repo-root-relative paths everywhere.
-#
-#  FIX 5 — aac-server Node 18/20/22 exit code 1
-#    Root cause: supertest@6 is NOT compatible with express@5.
-#      supertest@7 adds Express 5 support.
-#    Fix: supertest upgraded to ^7.0.0 in all 5 packages.
-#
-#  FIX 6 — Node.js 20 deprecation warnings
-#    Fix: FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true at workflow level.
-# ============================================================
-
 name: CI
 
 on:
@@ -61,8 +22,7 @@ permissions:
   contents: read
   actions: read
 
-# FIX 6: Opt all action runtimes into Node.js 24 now.
-# Silences the Node.js 20 deprecation warnings across all jobs.
+# Opt all action runtimes into Node.js 24 — silences Node.js 20 deprecation warnings
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -108,8 +68,8 @@ jobs:
 
   # ──────────────────────────────────────────────────────────────
   # JOB 2 — NODE.JS TESTS
-  # Matrix: 3 Node versions x 7 packages = 21 parallel jobs.
-  # FIX 5: supertest upgraded to ^7.0.0 in each package.json
+  # supertest upgraded to ^7.0.0 in every package.json
+  # to fix Express 5 compatibility (supertest@6 does not support Express 5)
   # ──────────────────────────────────────────────────────────────
   test-node:
     name: "Node ${{ matrix.node }} — ${{ matrix.package }}"
@@ -132,17 +92,15 @@ jobs:
             db_path: ':memory:'
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Set up Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
 
-      # Install at the MONOREPO ROOT — workspace packages resolve correctly
+      # Install at MONOREPO ROOT — workspace symlinks resolve correctly
       - name: Install all workspace dependencies
         run: npm install
 
@@ -166,7 +124,7 @@ jobs:
 
   # ──────────────────────────────────────────────────────────────
   # JOB 3 — GO SDK TESTS
-  # FIX 2: gofmt check is now a WARNING — does not block CI.
+  # gofmt check is WARNING ONLY — does not block CI
   # ──────────────────────────────────────────────────────────────
   test-go:
     name: "Go ${{ matrix.go }} — ai-citation-sdk"
@@ -180,8 +138,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go ${{ matrix.go }}
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
           cache-dependency-path: packages/ai-citation-sdk/src/go/go.mod
@@ -190,47 +147,28 @@ jobs:
         working-directory: packages/ai-citation-sdk/src/go
         run: go test -v -race -count=1 ./...
 
-      - name: Run go vet (static analysis)
+      - name: Run go vet
         working-directory: packages/ai-citation-sdk/src/go
         run: go vet ./...
 
-      # FIX 2: gofmt is a STYLE check, not a correctness check.
-      # Changed from hard-fail to warning. Run 'gofmt -w .' locally to fix.
-      - name: Check gofmt formatting (warning only — does not block CI)
+      - name: Check gofmt formatting (warning only)
         working-directory: packages/ai-citation-sdk/src/go
         run: |
           UNFORMATTED=$(gofmt -l .)
           if [ -n "$UNFORMATTED" ]; then
-            echo "::warning::Go files need gofmt formatting (run 'gofmt -w .' locally):"
-            echo "$UNFORMATTED"
-          else
-            echo "All Go files are correctly formatted"
+            echo "::warning::Go files need gofmt formatting (run 'gofmt -w .' locally): $UNFORMATTED"
           fi
 
   # ──────────────────────────────────────────────────────────────
   # JOB 4 — PYTHON TESTS
   #
-  # FIX 1: Complete rewrite.
+  # CRITICAL: Every include row MUST have a python: key.
+  # Without it, GitHub Actions cannot merge the include rows with
+  # the python version list → 3 jobs run with empty fields → exit 5.
   #
-  # WHY THE PREVIOUS VERSION FAILED (exit code 5 = no tests found):
-  #   The matrix was:
-  #     python: ['3.9', '3.11', '3.12']
-  #     include:
-  #       - package: ai-citation-sdk     <- NO python: key here
-  #         src_dir: ...
-  #       - package: crawl-manifest-client <- NO python: key here
-  #         src_dir: ...
-  #
-  #   GitHub Actions include: only ADDS fields to EXISTING rows that
-  #   share a matching key. Without a python: key in the include rows,
-  #   they never merge with the [3.9, 3.11, 3.12] rows.
-  #   Result: 3 jobs run with src_dir=undefined, test_pattern=undefined.
-  #   pytest finds no files -> exit 5.
-  #
-  #   ALSO: packages/ai-citation-sdk/src/python has ZERO Python test
-  #   files. Only crawl-manifest-client/tests has Python tests.
-  #
-  # FIX: 3 fully self-contained rows with every field explicitly set.
+  # Also: ai-citation-sdk/src/python has ZERO Python test files.
+  # Only crawl-manifest-client has Python tests.
+  # So: 3 rows × crawl-manifest-client only.
   # ──────────────────────────────────────────────────────────────
   test-python:
     name: "Python ${{ matrix.python }} — crawl-manifest-client"
@@ -253,37 +191,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
           cache-dependency-path: ${{ matrix.requirements }}
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r ${{ matrix.requirements }}
+        run: pip install -r ${{ matrix.requirements }}
 
       - name: Run pytest
         run: |
-          python -m pytest ${{ matrix.test_file }} \
+          python -m pytest ${{ matrix.test_file }} --import-mode=importlib \
             -v --tb=short -x \
-            --no-header \
-            --color=no
+            --no-header --color=no
         env:
           PYTHONDONTWRITEBYTECODE: '1'
 
   # ──────────────────────────────────────────────────────────────
   # JOB 5 — LINT ai-attribution.txt FIXTURES
   #
-  # FIX 4: Two problems fixed.
-  #   A) npm install moved from packages/ai-attribution-lint to ROOT
-  #   B) Fixture paths fixed: previous path ../../attribution-test-harness/
-  #      from working-directory: packages/ai-attribution-lint resolved to
-  #      <repo-root>/attribution-test-harness/ which does NOT exist.
-  #      Correct path is packages/attribution-test-harness/.
-  #      All commands now run from repo root with root-relative paths.
+  # BOTH of these install and path fixes are critical:
+  #   1. npm install at REPO ROOT (no working-directory)
+  #   2. All paths are repo-root-relative
+  #      WRONG: ../../attribution-test-harness/  (resolves to <root>/attribution-test-harness/ — MISSING)
+  #      RIGHT: packages/attribution-test-harness/fixtures/...
   # ──────────────────────────────────────────────────────────────
   lint-fixtures:
     name: Validate ai-attribution.txt fixtures
@@ -295,19 +227,17 @@ jobs:
         with:
           node-version: '20.x'
 
-      # FIX 4A: Install at REPO ROOT (no working-directory)
-      - name: Install dependencies
+      - name: Install dependencies (repo root)
         run: npm install
 
-      # FIX 4B: Repo-root-relative paths — no working-directory
-      - name: Valid fixture — must return exit 0
+      - name: Valid fixture — must exit 0
         run: |
           node packages/ai-attribution-lint/src/cli.js \
             packages/attribution-test-harness/fixtures/ai-attribution-txt/valid.txt \
             --json
           echo "Valid fixture passed linting"
 
-      - name: Invalid fixture — must return exit non-zero
+      - name: Invalid fixture — must exit non-zero
         run: |
           set +e
           node packages/ai-attribution-lint/src/cli.js \
@@ -316,7 +246,7 @@ jobs:
           CODE=$?
           set -e
           if [ "$CODE" -eq 0 ]; then
-            echo "FAIL: Linter accepted an INVALID fixture (exit 0)"
+            echo "FAIL: Linter accepted an INVALID fixture"
             exit 1
           fi
           echo "Invalid fixture correctly rejected (exit $CODE)"
@@ -324,9 +254,11 @@ jobs:
   # ──────────────────────────────────────────────────────────────
   # JOB 6 — DASHBOARD BUILD
   #
-  # FIX 3: npm install moved from packages/aac-dashboard-lite to ROOT.
-  # The dashboard depends on crawl-manifest-client: "*" (workspace pkg).
-  # npm only resolves workspace links from the workspace root.
+  # npm install must run at REPO ROOT.
+  # crawl-manifest-client: "*" was removed from dashboard dependencies
+  # because it is a Node.js server library (uses node-cache with Node.js
+  # built-ins) that Vite cannot bundle for the browser. The dashboard
+  # does not actually import from it anyway.
   # ──────────────────────────────────────────────────────────────
   build-dashboard:
     name: Build React dashboard
@@ -338,8 +270,7 @@ jobs:
         with:
           node-version: '20.x'
 
-      # FIX 3: Install at ROOT — resolves workspace packages
-      - name: Install all workspace dependencies
+      - name: Install dependencies (repo root)
         run: npm install
 
       - name: Build (Vite production)
@@ -367,14 +298,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
       - name: Audit — fail on high/critical
         run: npm audit --audit-level=high
       - name: Audit — full report (informational)
         run: npm audit --json > npm-audit-report.json || true
-      - name: Upload audit report
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: npm-audit-report
           path: npm-audit-report.json
@@ -382,7 +311,7 @@ jobs:
           if-no-files-found: warn
 
   # ──────────────────────────────────────────────────────────────
-  # JOB 8 — SPEC SECTION ALIGNMENT
+  # JOB 8 — SPEC SECTION ALIGNMENT (warnings only)
   # ──────────────────────────────────────────────────────────────
   spec-alignment:
     name: Spec section reference audit
@@ -390,23 +319,19 @@ jobs:
     needs: [changes]
     steps:
       - uses: actions/checkout@v4
-      - name: Extract spec references and check docs
+      - name: Extract and check spec references
         run: |
           REFS=$(grep -rh "§[0-9][0-9.]*[A-D]*" packages/ shared/ \
-            --include="*.js" --include="*.ts" \
-            --include="*.py" --include="*.go" \
-            2>/dev/null \
-            | grep -oE "§[0-9][0-9.]*[A-D]*" \
-            | sort -u)
-          if [ -z "$REFS" ]; then echo "No §section references found."; exit 0; fi
+            --include="*.js" --include="*.ts" --include="*.py" --include="*.go" \
+            2>/dev/null | grep -oE "§[0-9][0-9.]*[A-D]*" | sort -u)
+          [ -z "$REFS" ] && echo "No §section references found." && exit 0
           MISSING=0
           while IFS= read -r ref; do
             BASE=$(echo "$ref" | sed 's/§//' | sed 's/[A-D]$//')
-            if grep -qr "$BASE" docs/proposals/ 2>/dev/null || \
-               grep -qr "$ref" docs/proposals/ 2>/dev/null; then
-              echo "  $ref"
+            if grep -qr "$BASE" docs/proposals/ 2>/dev/null || grep -qr "$ref" docs/proposals/ 2>/dev/null; then
+              echo "  OK: $ref"
             else
-              echo "  WARNING: $ref not in docs/proposals/"
+              echo "  WARN: $ref not in docs/proposals/"
               MISSING=$((MISSING+1))
             fi
           done <<< "$REFS"
@@ -414,7 +339,7 @@ jobs:
           exit 0
 
   # ──────────────────────────────────────────────────────────────
-  # JOB 9 — JSON SCHEMA VALIDATION
+  # JOB 9 — JSON SCHEMA VALIDATION (warnings only)
   # ──────────────────────────────────────────────────────────────
   validate-schemas:
     name: Validate JSON schemas and fixtures
@@ -425,31 +350,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-      - name: Install AJV schema validator
-        run: npm install -g ajv-cli ajv-formats
-      - name: Check schema files are valid JSON
+      - run: npm install -g ajv-cli ajv-formats
+      - name: Check schemas are valid JSON
         run: |
           for f in shared/schemas/*.json; do
             node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" \
-              && echo "  OK: $f" \
-              || (echo "  FAIL: $f is not valid JSON" && exit 1)
+              && echo "  OK: $f" || (echo "  FAIL: $f" && exit 1)
           done
       - name: Validate crawl-manifest fixture
         run: |
-          ajv validate \
-            -s shared/schemas/crawl-manifest.schema.json \
+          ajv validate -s shared/schemas/crawl-manifest.schema.json \
             -d packages/attribution-test-harness/fixtures/crawl-manifest/sample.json \
             --spec=draft7 --strict=false 2>&1 \
-            && echo "  crawl-manifest fixture valid" \
-            || echo "::warning::Crawl manifest fixture has schema warnings"
+            && echo "  OK: crawl-manifest" || echo "::warning::crawl-manifest fixture warnings"
       - name: Validate citation-webhook fixture
         run: |
-          ajv validate \
-            -s shared/schemas/citation-webhook.schema.json \
+          ajv validate -s shared/schemas/citation-webhook.schema.json \
             -d packages/attribution-test-harness/fixtures/citation-webhooks/sample-event.json \
             --spec=draft7 --strict=false 2>&1 \
-            && echo "  citation-webhook fixture valid" \
-            || echo "::warning::Citation webhook fixture has schema warnings"
+            && echo "  OK: citation-webhook" || echo "::warning::citation-webhook fixture warnings"
 
   # ──────────────────────────────────────────────────────────────
   # JOB 10 — FINAL GATE
@@ -478,10 +397,8 @@ jobs:
           for job, data in results.items():
               r = data.get('result', 'unknown')
               (passed if r in ('success', 'skipped') else failed).append((job, r))
-          for j, r in passed:
-              print(f"  PASS  {j}: {r}")
-          for j, r in failed:
-              print(f"  FAIL  {j}: {r}")
+          for j, r in passed:  print(f"  PASS  {j}: {r}")
+          for j, r in failed:  print(f"  FAIL  {j}: {r}")
           if failed:
               print(f"\n{len(failed)} job(s) failed.")
               sys.exit(1)
