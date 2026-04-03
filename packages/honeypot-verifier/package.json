@@ -4,7 +4,16 @@
   "description": "Honeypot verification node server for auditing X-AI-Crawl-Purpose header accuracy (AIACTA §2.4.1). Maintains unique URLs with detectable metadata; cross-checks claimed crawl purpose against observed model weight inclusion.",
   "author": "Eric Michel",
   "main": "src/index.js",
-  "scripts": { "start": "node src/index.js", "test": "jest" },
-  "dependencies": { "express": "^5.2.1", "uuid": "^9.0.0" },
-  "devDependencies": { "jest": "^29.0.0", "supertest": "^6.0.0" }
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "supertest": "^7.0.0"
+  }
 }
