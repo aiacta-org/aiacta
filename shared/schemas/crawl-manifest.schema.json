@@ -1,34 +1,60 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://aiacta.org/schemas/crawl-manifest/v1.0",
-  "title": "AIACTA Crawl Manifest Response",
-  "description": "Response schema for GET /crawl-manifest/v1 (Proposal 1 §2.3)",
+  "title": "AIACTA Crawl Manifest API Response",
+  "description": "Response schema for GET /crawl-manifest/v1 — the AI Provider's Crawl Manifest endpoint (Proposal 1, §2.2–2.3). Publishers query this endpoint on each AI Provider's API to see which of their pages were crawled, when, and for what purpose.\n\nNOTE ON TERMINOLOGY:\n  'provider' (top-level field) = the AI company serving this API (e.g. 'anthropic', 'openai').\n  'domain' (top-level field) = the PUBLISHER's domain that was queried (e.g. 'example.com').\n  The PUBLISHER queries the AI PROVIDER's API. The response tells the publisher what the AI crawled.",
   "type": "object",
   "required": [
     "schema_version",
-    "publisher",
-    "base_url",
+    "provider",
+    "domain",
     "period",
     "total_crawled_urls",
     "urls"
   ],
   "properties": {
-    "schema_version": { "type": "string", "enum": ["1.0"] },
-    "publisher": { "type": "string" },
-    "base_url": { "type": "string", "format": "uri" },
-    "contact": { "type": "string" },
+    "schema_version": {
+      "type": "string",
+      "enum": ["1.0"],
+      "description": "AIACTA specification version. Always '1.0' for this version."
+    },
+    "provider": {
+      "type": "string",
+      "description": "Identifier for the AI provider serving this response — the AI company that performed the crawls (e.g. 'anthropic', 'openai', 'google'). NOT the publisher. This field identifies WHO crawled the content."
+    },
+    "domain": {
+      "type": "string",
+      "description": "The publisher's domain that was queried. This is the domain the publisher requested crawl history for (e.g. 'example.com'). Must not include protocol, path, or trailing slash."
+    },
     "period": {
       "type": "object",
       "required": ["from", "to"],
+      "description": "The time window covered by this response, matching the from/to query parameters. Maximum window is 90 days per request (§2.2).",
       "properties": {
-        "from": { "type": "string", "format": "date-time" },
-        "to": { "type": "string", "format": "date-time" }
+        "from": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Start of the query window (ISO 8601, UTC). Inclusive."
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time",
+          "description": "End of the query window (ISO 8601, UTC). Inclusive. Maximum 90 days from 'from'."
+        }
       }
     },
-    "total_crawled_urls": { "type": "integer", "minimum": 0 },
-    "next_cursor": { "type": "string" },
+    "total_crawled_urls": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of distinct URLs crawled from this domain during the period. May be larger than the number of items in 'urls' if pagination is in use."
+    },
+    "next_cursor": {
+      "type": ["string", "null"],
+      "description": "Opaque pagination cursor. Pass as the 'cursor' query parameter in the next request to retrieve the following page. Null when this is the final page."
+    },
     "urls": {
       "type": "array",
+      "description": "List of crawled URLs for this page of results. Each item describes one URL that was crawled during the period.",
       "items": {
         "type": "object",
         "required": [
@@ -40,18 +66,42 @@
           "content_hash"
         ],
         "properties": {
-          "url": { "type": "string", "format": "uri" },
-          "last_crawled": { "type": "string", "format": "date-time" },
-          "crawl_count_30d": { "type": "integer", "minimum": 0 },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The full URL that was crawled, including protocol and path."
+          },
+          "last_crawled": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the most recent crawl of this URL within the query period (ISO 8601, UTC)."
+          },
+          "crawl_count_30d": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of times this URL was crawled in the 30 days ending at 'last_crawled'. Helps publishers understand crawl frequency."
+          },
           "purpose": {
             "type": "array",
+            "minItems": 1,
+            "description": "Declared crawl purpose(s) for this URL — what the AI provider intends to use the content for. Sent as X-AI-Crawl-Purpose header during crawling (§2.1).",
             "items": {
               "type": "string",
-              "enum": ["training", "rag", "index", "quality-eval"]
+              "enum": ["training", "rag", "index", "quality-eval"],
+              "description": "training = model training; rag = real-time retrieval-augmented generation; index = general search index; quality-eval = benchmark or RLHF evaluation."
             }
           },
-          "http_status_at_crawl": { "type": "integer" },
-          "content_hash": { "type": "string", "pattern": "^sha256:[a-f0-9]+$" }
+          "http_status_at_crawl": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 599,
+            "description": "HTTP status code returned by the publisher's server when this URL was crawled. Allows publishers to verify their content was accessible (200) or detect crawl errors (404, 500, etc.)."
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "SHA-256 hash of the normalised page body text at crawl time (HTML tags stripped, whitespace collapsed). Allows publishers to verify the content the AI received matches what they published. Format: 'sha256:' followed by 64 lowercase hex characters."
+          }
         }
       }
     }
