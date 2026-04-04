@@ -2,47 +2,99 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://aiacta.org/schemas/ai-attribution-txt/v1.0",
   "title": "AIACTA ai-attribution.txt Parsed Fields",
-  "description": "Parsed field model for ai-attribution.txt (Proposal 4 §5.3–5.4)",
+  "description": "Describes the structured object produced by parsing an ai-attribution.txt file (Proposal 4, §5.3–5.6). The file format on disk is a plain-text key: value format — this schema describes the parsed JavaScript/Python object returned by the parser, using the canonical hyphenated field names defined in §5.3.\n\nNOTE ON TERMINOLOGY:\n  'Publisher' in AIACTA = the content creator who owns the website.\n  'AI Provider' in AIACTA = the AI company (Anthropic, OpenAI, Google, etc.).\n  This file is placed by the PUBLISHER on their own website to declare their preferences to AI Providers.",
   "type": "object",
-  "required": ["schema_version", "publisher", "base_url"],
+  "required": ["Schema-Version"],
   "properties": {
-    "schema_version": { "type": "string", "enum": ["1.0"] },
-    "publisher": { "type": "string" },
-    "base_url": { "type": "string", "format": "uri" },
-    "contact": { "type": "array", "items": { "type": "string" } },
-    "preferredAttribution": { "type": "string" },
-    "canonicalAuthor": { "type": "string" },
-    "allowPurpose": {
+    "Schema-Version": {
+      "type": "string",
+      "enum": ["1.0"],
+      "description": "Version of the ai-attribution.txt specification. Must be '1.0' for this version. Required field — parsers must reject files with an unknown version (§5.6)."
+    },
+    "Contact": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "One or more contact points for the publisher — email addresses or URLs for licensing/attribution inquiries. Multiple Contact: lines are allowed and accumulate as an array. Example values: 'licensing@example.com', 'https://example.com/ai-licensing'. Strongly recommended."
+    },
+    "Preferred-Attribution": {
+      "type": "string",
+      "description": "How the publisher prefers to be credited in AI responses when their content is cited. Example: 'Example Media (example.com)'. AI providers should use this exact string when displaying source attribution."
+    },
+    "Canonical-Author": {
+      "type": "string",
+      "description": "The default author attribution for content on this domain when no per-article author is specified. Example: 'The Editorial Team'. Used by AI providers in author-title-url citation format."
+    },
+    "Allow-Purpose": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["training", "rag", "index", "quality-eval"],
+        "description": "training = model training; rag = real-time retrieval for query answering; index = general indexing; quality-eval = benchmarks/RLHF."
+      },
+      "description": "Crawl purposes the publisher explicitly permits. Multiple Allow-Purpose: lines accumulate as an array. If this field is absent, all purposes are permitted by default per §5.5. Note: robots.txt Disallow takes precedence over Allow-Purpose (§5.5)."
+    },
+    "Disallow-Purpose": {
       "type": "array",
       "items": {
         "type": "string",
         "enum": ["training", "rag", "index", "quality-eval"]
-      }
+      },
+      "description": "Crawl purposes the publisher explicitly prohibits. The most common use: 'Disallow-Purpose: training' to block model training while allowing real-time query answering ('rag'). Multiple lines accumulate as an array."
     },
-    "disallowPurpose": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": ["training", "rag", "index", "quality-eval"]
-      }
+    "Require-Citation": {
+      "type": "string",
+      "enum": ["true", "false"],
+      "description": "If 'true', AI providers must cite this source by name in any response that uses its content. Note: the parser returns a string ('true'/'false') since the file format is plain text; linter rules handle the boolean coercion."
     },
-    "requireCitation": { "type": "boolean", "default": false },
-    "requireSourceLink": { "type": "boolean", "default": false },
-    "citationFormat": {
+    "Require-Source-Link": {
+      "type": "string",
+      "enum": ["true", "false"],
+      "description": "If 'true', citations must include a clickable hyperlink to the source URL, not just a text attribution. Requires Require-Citation: true to be meaningful."
+    },
+    "Citation-Format": {
       "type": "string",
       "enum": ["title-only", "url-only", "title-and-url", "author-title-url"],
-      "default": "title-and-url"
+      "description": "Preferred citation display format when Require-Citation is true. Default: 'title-and-url'. 'author-title-url' includes the Canonical-Author or per-article author byline."
     },
-    "allowUtmAppend": { "type": "boolean", "default": false },
-    "preferredUtmSource": { "type": "string" },
-    "citationWebhook": { "type": "string", "format": "uri" },
-    "recrawlAfter": { "type": "string", "pattern": "^[0-9]+(h|d|w)$" },
-    "licensingContact": { "type": "string" },
-    "licensingUrl": { "type": "string", "format": "uri" },
-    "rewardTier": {
+    "Allow-UTM-Append": {
       "type": "string",
-      "enum": ["standard", "premium", "licensing-only", "none"]
+      "enum": ["true", "false"],
+      "description": "If 'true', AI providers may append UTM parameters to outbound links to this domain for traffic attribution (Proposal 3, §4.3). Default: false. AI providers must never append UTM params to publishers who have not opted in."
     },
-    "contentLicense": { "type": "string" }
-  }
+    "Preferred-UTM-Source": {
+      "type": "string",
+      "description": "Custom utm_source value the publisher prefers when Allow-UTM-Append is true. If omitted, the AI provider uses its own platform identifier (e.g. 'anthropic'). Example: 'mypublication'. Must be URL-safe (no spaces, special chars)."
+    },
+    "Citation-Webhook": {
+      "type": "string",
+      "format": "uri",
+      "description": "HTTPS endpoint where the publisher receives real-time citation webhook events (Proposal 2, §3.4). The AI provider POSTs a signed CitationEvent JSON payload to this URL each time content from this domain is cited. The endpoint must be on the same verified domain. Example: 'https://example.com/webhooks/ai-citations'."
+    },
+    "Recrawl-After": {
+      "type": "string",
+      "pattern": "^[0-9]+(h|d|w)$",
+      "description": "Minimum interval before an AI crawler should recrawl this domain. Format: integer + unit (h=hours, d=days, w=weeks). Example: '24h', '7d', '2w'. Helps publishers control server load. AI providers should respect this as a courtesy."
+    },
+    "Licensing-Contact": {
+      "type": "string",
+      "description": "Email address for licensing inquiries — for publishers who want to negotiate direct licensing agreements with AI providers beyond the AAC framework. Example: 'data-licensing@example.com'."
+    },
+    "Licensing-URL": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL of the publisher's AI licensing terms page. AI providers interested in a direct commercial licence can visit this page. Example: 'https://example.com/ai-licensing-terms'."
+    },
+    "Reward-Tier": {
+      "type": "string",
+      "enum": ["standard", "premium", "licensing-only", "none"],
+      "description": "Publisher's participation level in the AAC reward distribution framework (Proposal 5, §7). 'standard' = opt into regular AAC distributions; 'premium' = higher distribution multiplier tier; 'licensing-only' = prefers direct licensing over AAC pool; 'none' = opts out of AAC distributions."
+    },
+    "Content-License": {
+      "type": "string",
+      "description": "SPDX licence identifier for the content on this domain. This determines the distribution multiplier in AAC payouts (§7.5). 'All-Rights-Reserved' (highest multiplier), 'CC-BY-ND-4.0', 'CC-BY-SA-4.0', 'CC-BY-4.0', 'CC0-1.0' (zero multiplier). Must be a valid SPDX identifier or 'All-Rights-Reserved'."
+    }
+  },
+  "additionalProperties": true,
+  "$comment": "additionalProperties: true implements the forward-compatibility requirement in §5.6 — parsers must silently ignore unknown fields so future spec versions with new fields do not break existing implementations."
 }

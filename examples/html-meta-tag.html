@@ -1,11 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta name="aiacta:owner" content="Example Inc.">
-  <meta name="aiacta:content_id" content="article-123">
-  <meta name="aiacta:canonical" content="https://example.com/article-123">
+  <meta charset="UTF-8" />
+  <!--
+    AIACTA Proposal 3 — Referrer Headers (§4)
+
+    This meta tag sets the Referrer-Policy for this page so that when users
+    click links in AI responses and arrive here, the Referer header correctly
+    identifies the AI platform as the traffic source.
+
+    The 'origin' value sends only the AI platform's base URL (e.g.
+    https://claude.ai) rather than the full path of the AI conversation,
+    which would expose query details. This balances attribution with privacy.
+
+    You can also set this as an HTTP header (preferred) from your server:
+      Referrer-Policy: origin
+  -->
+  <meta name="referrer" content="origin" />
+
+  <!--
+    Optional: Link to your ai-attribution.txt for human-readable discovery.
+    AI crawlers discover ai-attribution.txt automatically at /.well-known/
+    (they do not need this link tag), but it helps human developers find it.
+  -->
+  <link rel="ai-attribution" href="/.well-known/ai-attribution.txt" />
+
+  <title>Example Article — Example Media</title>
 </head>
 <body>
-  <h1>Example Article</h1>
+  <article>
+    <h1>Example Article</h1>
+    <p>Content goes here. When an AI cites this article, it will notify
+       the webhook endpoint declared in your ai-attribution.txt file.</p>
+  </article>
 </body>
 </html>

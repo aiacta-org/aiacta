@@ -1,6 +1,23 @@
 {
-  "schema_version": "1.0",
-  "publisher": "Example Inc.",
-  "base_url": "https://example.com",
-  "contact": "contact@example.com"
+  "_comment": "Example of a parsed ai-attribution.txt object — what the AIACTA parser returns from a real ai-attribution.txt file. This is NOT a file format you serve; the actual file served at /.well-known/ai-attribution.txt is a plain-text key:value format. See examples/ai-attribution.txt.example for the file format.",
+  "Schema-Version": "1.0",
+  "Contact": [
+    "ai-licensing@example.com",
+    "https://example.com/ai-licensing"
+  ],
+  "Preferred-Attribution": "Example Media (example.com)",
+  "Canonical-Author": "The Editorial Team",
+  "Allow-Purpose": ["rag", "index"],
+  "Disallow-Purpose": ["training"],
+  "Require-Citation": "true",
+  "Require-Source-Link": "true",
+  "Citation-Format": "title-and-url",
+  "Allow-UTM-Append": "true",
+  "Preferred-UTM-Source": "examplemedia",
+  "Citation-Webhook": "https://example.com/webhooks/ai-citations",
+  "Recrawl-After": "24h",
+  "Licensing-Contact": "data-licensing@example.com",
+  "Licensing-URL": "https://example.com/ai-licensing-terms",
+  "Reward-Tier": "standard",
+  "Content-License": "CC-BY-ND-4.0"
 }

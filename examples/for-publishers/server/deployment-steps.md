@@ -1,83 +1,172 @@
-<!-- TODO: Needs work -->
+# Publisher Server Deployment Guide
 
-# Step-by-Step Deployment (Publisher Guide)
-
-
-Option A — Fastest (Node.js / Express)
-1. Create project
-mkdir aiacta-mvs
-cd aiacta-mvs
-npm init -y
-npm install express
-
-2. Create server file
-touch server.js
-
-Paste your final code.
-
-3. Run locally
-node server.js
-
-Test:
-
-curl http://localhost:3000/.well-known/aiacta.json
-
-4. Deploy (Render — simplest)
-
-Steps:
-Go to render.com
-“New Web Service”
-Connect GitHub repo
-
-Settings:
-Build Command: npm install
-Start Command: node server.js
-
-Deploy
-
-You’ll get:
-
-https://your-app.onrender.com/.well-known/aiacta.json
-
-5. Attach to real domain
-
-Point:
-
-yourdomain.com → Render service
-
-Now:
-
-https://yourdomain.com/.well-known/aiacta.json ✅
+This guide walks you through deploying an AIACTA-compliant publisher server —
+the minimal infrastructure needed to participate in the AIACTA framework.
+The reference implementation is in `minimal-server.js` alongside this file.
 
 ---
 
-Option B — REAL MVS (No server required) ⚡️
+## What this server does
 
-This is what will drive mass adoption.
+It implements three AIACTA proposals:
 
-1. Create file:
-/.well-known/aiacta.json
+| Proposal | What it does |
+|----------|-------------|
+| **Proposal 4** — ai-attribution.txt | Serves `/.well-known/ai-attribution.txt` declaring your preferences to AI crawlers |
+| **Proposal 3** — Referrer Headers | Sets `Referrer-Policy: origin` so AI-referred traffic is visible in your analytics |
+| **Proposal 2** — Citation Webhooks | Receives signed citation events each time an AI cites your content |
 
-2. Paste:
+---
+
+## Option A — Full server (Node.js / Express)
+
+Best if you want real-time citation notifications and full control.
+
+### 1. Create the project
+
+```bash
+mkdir my-aiacta-server
+cd my-aiacta-server
+npm init -y
+npm install express
+```
+
+### 2. Copy the server file
+
+Copy `minimal-server.js` into your project and edit the `CONFIG` block at the top:
+
+```js
+const CONFIG = {
+  preferredAttribution: 'Your Publication Name (yourdomain.com)',
+  contact: 'ai-licensing@yourdomain.com',
+  webhookSecret: process.env.WEBHOOK_SECRET || 'set-via-env-var',
+};
+```
+
+### 3. Run locally and test
+
+```bash
+node minimal-server.js
+```
+
+Test the ai-attribution.txt endpoint:
+```bash
+curl http://localhost:3000/.well-known/ai-attribution.txt
+```
+
+Validate it with the AIACTA linter:
+```bash
+npx ai-attribution-lint http://localhost:3000
+```
+
+### 4. Deploy to Render (simplest free hosting)
+
+1. Push your code to a GitHub repository
+2. Go to [render.com](https://render.com) → **New Web Service**
+3. Connect your GitHub repository
+4. Set:
+   - **Build Command:** `npm install`
+   - **Start Command:** `node minimal-server.js`
+5. Add an environment variable:
+   - `WEBHOOK_SECRET` → your secret from the AI provider's Publisher Portal
+6. Click **Deploy**
+
+Your server will be live at:
+```
+https://your-app.onrender.com/.well-known/ai-attribution.txt
+```
+
+### 5. Attach to your real domain
+
+Point your domain's DNS to your Render service, or configure a custom domain
+in the Render dashboard. Once pointed:
+
+```
+https://yourdomain.com/.well-known/ai-attribution.txt  ✅
+```
+
+### 6. Register with AI providers
+
+Once live, visit each AI provider's Publisher Portal:
+- Verify your domain ownership (DNS TXT record)
+- Register your `Citation-Webhook` URL to receive citation events
+- The portal gives you a unique HMAC secret per provider — store it securely
+
+---
+
+## Option B — Static file only (no server required)
+
+If you only need the `ai-attribution.txt` file and don't need citation webhooks,
+you can serve it as a static file from any CDN or static host.
+
+### 1. Create the file
+
+Create `ai-attribution.txt` with the plain-text key: value format:
+
+```
+Schema-Version: 1.0
+Contact: ai-licensing@yourdomain.com
+Preferred-Attribution: Your Publication Name (yourdomain.com)
+Allow-Purpose: rag
+Allow-Purpose: index
+Disallow-Purpose: training
+Require-Citation: true
+Require-Source-Link: true
+Citation-Format: title-and-url
+Recrawl-After: 24h
+Reward-Tier: standard
+Content-License: All-Rights-Reserved
+```
+
+### 2. Upload to your static host
+
+Upload the file so it is served at:
+```
+https://yourdomain.com/.well-known/ai-attribution.txt
+```
+
+Supported hosts: AWS S3, Cloudflare Pages, Vercel, Netlify, GitHub Pages.
+
+For S3 or similar: create a `.well-known/` directory and upload `ai-attribution.txt` inside it.
+
+Make sure the file is served with Content-Type: `text/plain`.
+
+### 3. Set the Referrer-Policy header
+
+Even without a server, you can set `Referrer-Policy: origin` at the CDN level:
+
+**Cloudflare:** Rules → Transform Rules → Response Headers → Add:
+```
+Referrer-Policy: origin
+```
+
+**Vercel:** In `vercel.json`:
+```json
 {
-  "schema_version": "1.0",
-  "publisher": "Your Company Name",
-  "base_url": "https://yourdomain.com",
-  "contact": "email@yourdomain.com"
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "Referrer-Policy", "value": "origin" }]
+    }
+  ]
 }
+```
 
-3. Upload to:
-S3
-Cloudflare Pages
-Vercel
-Any static host
+### 4. Validate your deployment
 
-4. Add headers (CDN level)
-Cloudflare example:
-Go to Rules → Transform Rules
+```bash
+npx ai-attribution-lint https://yourdomain.com
+```
 
-Add headers:
-X-AIACTA-Content-ID: {dynamic or static}
-X-AIACTA-Owner: Your Company Name
+---
 
+## Registering with the AAC
 
+To receive payments from the AI Attribution Collective:
+
+1. Go to [aac.aiacta.org/register](https://aac.aiacta.org/register)
+2. Verify domain ownership
+3. Set `Reward-Tier: standard` in your `ai-attribution.txt`
+4. Provide payment details in the AAC portal
+
+See `docs/for-publishers/CREATOR-GUIDE.md` for the full registration walkthrough.
