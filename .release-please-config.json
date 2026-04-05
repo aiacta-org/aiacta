@@ -1,0 +1,72 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": true,
+  "changelog-sections": [
+    { "type": "feat",     "section": "### Added",      "hidden": false },
+    { "type": "fix",      "section": "### Fixed",      "hidden": false },
+    { "type": "security", "section": "### Security",   "hidden": false },
+    { "type": "perf",     "section": "### Performance","hidden": false },
+    { "type": "docs",     "section": "### Documentation","hidden": false },
+    { "type": "refactor", "section": "### Changed",    "hidden": false },
+    { "type": "chore",    "section": "### Maintenance", "hidden": true },
+    { "type": "test",     "section": "### Tests",       "hidden": true }
+  ],
+  "packages": {
+    ".": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "bump-minor-pre-major": true,
+      "include-component-in-tag": false
+    },
+    "packages/ai-attribution-lint": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "ai-attribution-lint",
+      "include-component-in-tag": true
+    },
+    "packages/ai-citation-sdk": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "ai-citation-sdk",
+      "include-component-in-tag": true
+    },
+    "packages/crawl-manifest-client": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "crawl-manifest-client",
+      "include-component-in-tag": true
+    },
+    "packages/aac-server": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "aac-server",
+      "include-component-in-tag": true
+    },
+    "packages/aac-dashboard-lite": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "aac-dashboard-lite",
+      "include-component-in-tag": true
+    },
+    "packages/vwp-gateway": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "vwp-gateway",
+      "include-component-in-tag": true
+    },
+    "packages/referrer-middleware": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "referrer-middleware",
+      "include-component-in-tag": true
+    },
+    "packages/honeypot-verifier": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "honeypot-verifier",
+      "include-component-in-tag": true
+    }
+  }
+}

@@ -1,0 +1,68 @@
+# ============================================================
+#  release-please.yml  —  Automatic CHANGELOG & Release PRs
+# ============================================================
+#
+#  WHAT THIS DOES:
+#  After every merge to main, this workflow runs release-please.
+#  It reads your commit messages and automatically:
+#    1. Updates CHANGELOG.md with a new section
+#    2. Bumps version numbers in package.json files
+#    3. Opens a "Release PR" with all these changes
+#
+#  WHEN YOU'RE READY TO RELEASE:
+#    Merge the open "Release PR" → release-please automatically
+#    creates the git tag → your release.yml workflow fires and
+#    publishes to npm/PyPI.
+#
+#  HOW COMMIT MESSAGES DETERMINE THE VERSION BUMP:
+#    fix: anything           → patch version bump  (1.0.0 → 1.0.1)
+#    feat: anything          → minor version bump  (1.0.0 → 1.1.0)
+#    feat!: anything         → major version bump  (1.0.0 → 2.0.0)
+#    (any message with BREAKING CHANGE in footer → major)
+#    chore/docs/style/test   → no version bump, still added to CHANGELOG
+#
+#  COMMIT MESSAGE FORMAT (Conventional Commits):
+#    type(scope): description
+#
+#    Examples:
+#      feat(sdk): add Ed25519 signature support
+#      fix(aac-server): remove FK constraint on citation_events.provider_id
+#      docs(readme): add deployment guide for publishers
+#      chore(deps): update supertest to v7
+#
+#  REQUIRED SETUP (one-time):
+#    1. Go to: github.com/aiacta-org/aiacta/settings/actions
+#    2. Under "Workflow permissions" → select "Read and write permissions"
+#    3. Check "Allow GitHub Actions to create and approve pull requests"
+#    4. Save
+#    That's it. No tokens or secrets needed.
+# ============================================================
+
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write        # Create/update CHANGELOG.md and version files
+  pull-requests: write   # Open the Release PR
+
+jobs:
+  release-please:
+    name: Update changelog and open release PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          # Uses the GitHub token automatically available in Actions
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+          # Release type: node for Node.js monorepos
+          release-type: node
+
+          # Monorepo: manage versions for each package independently
+          # When a package has changes, only that package's version bumps.
+          # Remove these lines if you prefer a single root version.
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json

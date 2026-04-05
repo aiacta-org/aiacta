@@ -16,6 +16,6 @@ Closes #[number]
 - [ ] Code follows project conventions
 - [ ] No secrets committed
 - [ ] Documentation updated
-- [ ] CHANGELOG.md updated (for non-trivial changes)
+- [ ] CHANGELOG-friendly commit format. See CONTRIBUTING.md(§5.2)
 
 ---

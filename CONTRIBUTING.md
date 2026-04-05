@@ -554,13 +554,14 @@ go test ./... -v
 
 ### Step 5 — Commit Your Changes
 
+### 5.1 Commit Format 
 Stage and commit frequently. Small, logical commits are easier to review
 and easier to revert if something goes wrong.
-
 ```bash
 # Stage specific files (never use 'git add .' on the first commit)
 git add packages/ai-attribution-lint/src/rules/new-rule.js
 git add packages/ai-attribution-lint/tests/new-rule.test.js
+
 
 # Write a commit message in this format:
 git commit -m "feat(lint): add UTM opt-in field validation rule
@@ -573,13 +574,33 @@ Implements the opt-in requirement from §4.3.
 Closes #73"
 ```
 
-**Commit message format:**
+### 5.2 Commit format REALLY matters!
 ```
 type(scope): brief summary (max 72 characters, present tense)
 
 Optional body: explain WHY (not what — the code shows what).
 Reference Issues with 'Closes #N' or 'Refs #N'.
 ```
+
+#### Write your commits like this and the CHANGELOG.md writes itself:
+
+```bash
+git commit -m "feat(sdk): add Ed25519 signature verification"
+# → goes under "### Added" in CHANGELOG, bumps minor version
+
+git commit -m "fix(aac-server): handle empty citation batches correctly"
+# → goes under "### Fixed" in CHANGELOG, bumps patch version
+
+git commit -m "docs: update publisher deployment guide"
+# → goes under "### Documentation" in CHANGELOG, no version bump
+
+git commit -m "feat!: rename provider field in crawl manifest schema"
+# → goes under "### Added" with breaking change note, bumps MAJOR version
+```
+
+**The ! after the type means "breaking change." The format is type(scope): description — scope is optional but helpful.**
+
+---
 
 ### Step 6 — Push Your Branch
 

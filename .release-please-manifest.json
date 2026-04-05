@@ -1,0 +1,11 @@
+{
+  ".": "1.0.1",
+  "packages/ai-attribution-lint": "1.0.1",
+  "packages/ai-citation-sdk": "1.0.1",
+  "packages/crawl-manifest-client": "1.0.1",
+  "packages/aac-server": "1.0.1",
+  "packages/aac-dashboard-lite": "1.0.1",
+  "packages/vwp-gateway": "1.0.1",
+  "packages/referrer-middleware": "1.0.1",
+  "packages/honeypot-verifier": "1.0.1"
+}

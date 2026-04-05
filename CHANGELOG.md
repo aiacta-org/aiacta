@@ -1,8 +1,32 @@
 # Changelog
 
 All notable changes to the AIACTA reference implementation are documented here.
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Every time you merge something to main, the release-please workflow reads your commit messages and opens (or updates) a "Release PR" automatically. The PR contains the updated CHANGELOG.md and bumped version numbers. When you're ready to release, merge that PR. It creates the git tag, which triggers your existing release.yml, which publishes to npm and PyPI.
+Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
+
+
+---
+
+## [1.0.1] — 2026-04-04
+
+### Added
+- Complete reference implementation of all five AIACTA proposals
+- ai-attribution-lint CLI validator (§5.7)
+- ai-citation-sdk for Node.js, Python, and Go (§3.4)
+- crawl-manifest-client for Node.js and Python (§2.2)
+- AAC reference server with SQLite (§7.3–7.5)
+- VWP gateway with HMAC and Ed25519 signature verification (§3.4A–D)
+- Honeypot verification node (§2.4.1)
+- Referrer-Policy middleware for Node.js and Python (§4.2–4.4)
+- Attribution test harness with Docker (§12.1)
+- Complete specification documents for all five proposals
+- Implementation guide for AI providers
+- Creator guide for publishers
+- AAC governance documentation
+- GitHub Actions CI/CD pipeline
+- Security policy
+
 
 ---
 
