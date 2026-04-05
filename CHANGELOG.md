@@ -8,6 +8,14 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## 1.0.0 (2026-04-05)
+
+
+### Bug Fixes
+
+* resolve 10 bugs blocking CI and production release ([#18](https://github.com/aiacta-org/aiacta/issues/18)) ([981cc01](https://github.com/aiacta-org/aiacta/commit/981cc014812c551c7c7728d536de7c8eea00ce2a))
+* updated versions for package for successful CI workflow ([#19](https://github.com/aiacta-org/aiacta/issues/19)) ([3eb65a2](https://github.com/aiacta-org/aiacta/commit/3eb65a2d5c60fc7360e6f05eb72d5c86a8cd8f45))
+
 ## [1.0.1] — 2026-04-04
 
 ### Added
