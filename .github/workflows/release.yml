@@ -126,8 +126,10 @@ jobs:
 
       - name: Install Python deps and run tests
         run: |
-          pip install cryptography>=41.0 requests>=2.31 pytest
-          python -m pytest packages/ai-citation-sdk/src/python -v
+          pip install -r packages/crawl-manifest-client/src/python/requirements.txt
+          python -m pytest packages/crawl-manifest-client/tests/python_client.test.py \
+            --import-mode=importlib \
+            -v --tb=short
 
   # ──────────────────────────────────────────────────────────────
   # JOB 3 — PUBLISH TO NPM
