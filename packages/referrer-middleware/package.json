@@ -5,7 +5,7 @@
   "author": "Eric Michel",
   "main": "src/node/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest --forceExit"
   },
   "dependencies": {
     "express": "^5.2.1"

@@ -6,7 +6,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "jest"
+    "test": "jest --forceExit"
   },
   "dependencies": {
     "express": "^5.2.1",

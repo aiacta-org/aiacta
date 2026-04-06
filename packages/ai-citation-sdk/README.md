@@ -1,8 +1,8 @@
-# ai-citation-sdk
+# @aiacta-org/ai-citation-sdk
 
-> Webhook receiver SDK for AIACTA citation events — verifies signatures, handles idempotency, and provides ready-to-use middleware (Proposal 2, §3.4).
+> Webhook receiver SDK for AIACTA citation events — verifies signatures, handles idempotency, and provides ready-to-use Express middleware (Proposal 2, §3.4).
 
-[![npm version](https://img.shields.io/npm/v/ai-citation-sdk.svg)](https://www.npmjs.com/package/ai-citation-sdk)
+[![npm version](https://img.shields.io/npm/v/@aiacta-org/ai-citation-sdk.svg)](https://www.npmjs.com/package/@aiacta-org/ai-citation-sdk)
 [![PyPI version](https://img.shields.io/pypi/v/ai-citation-sdk.svg)](https://pypi.org/project/ai-citation-sdk/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
 [![AIACTA Spec](https://img.shields.io/badge/spec-AIACTA%2F1.0-orange.svg)](../../docs/proposals/proposal-2-citation-webhooks.md)
@@ -13,13 +13,13 @@ Available in **Node.js**, **Python**, and **Go**.
 
 ## What is this?
 
-When an AI provider (Anthropic, OpenAI, Google, etc.) cites your content in a response, they send a signed HTTP POST to your `Citation-Webhook` endpoint. This SDK handles the security and plumbing so you can focus on what to do with the data.
+When an AI provider (Anthropic, OpenAI, Google, etc.) cites your content in a response, they POST a signed event to your `Citation-Webhook` endpoint. This SDK handles the security and plumbing so you can focus on what to do with the data.
 
 It provides:
-- **Signature verification** — HMAC-SHA256 constant-time comparison (prevents timing attacks)
-- **Replay attack prevention** — timestamps validated within ±5-minute window
-- **Idempotency** — events with duplicate `idempotency_key` are safely ignored
-- **Express middleware** — drop-in handler for Node.js web servers
+- **Signature verification** — HMAC-SHA256 with constant-time comparison (prevents timing attacks)
+- **Replay attack prevention** — timestamps validated within a ±5-minute window
+- **Idempotency** — duplicate events are safely ignored
+- **Express middleware** — drop-in handler for Node.js servers
 - **Retry schedule** — implements the §3.5 six-attempt delivery retry
 
 ---
@@ -28,7 +28,7 @@ It provides:
 
 **Node.js**
 ```bash
-npm install ai-citation-sdk
+npm install @aiacta-org/ai-citation-sdk
 ```
 
 **Python**
@@ -49,17 +49,16 @@ go get github.com/aiacta-org/aiacta/ai-citation-sdk
 
 ```javascript
 const express = require('express');
-const { createExpressMiddleware } = require('ai-citation-sdk');
+const { createExpressMiddleware } = require('@aiacta-org/ai-citation-sdk');
 
 const app = express();
 
-// IMPORTANT: use express.raw() before the middleware — signature
-// verification requires the raw bytes, not parsed JSON.
+// IMPORTANT: express.raw() must come before the middleware.
+// Signature verification requires the raw bytes, not parsed JSON.
 app.post(
   '/webhooks/ai-citations',
   express.raw({ type: 'application/json' }),
   createExpressMiddleware({
-    // Your HMAC secret from the AI provider's Publisher Portal
     secret: process.env.WEBHOOK_SECRET,
 
     // Idempotency store — prevents processing the same event twice.
@@ -69,10 +68,9 @@ app.post(
       set:    async (key) => await db.citations.markProcessed(key),
     },
 
-    // Called once per unique event after signature verification
+    // Called once per unique, verified event
     onEvent: async (event) => {
       console.log('Citation received:', event.citation.url);
-      // Save to your database, update analytics, send a notification...
       await db.citations.insert(event);
     },
   })
@@ -84,14 +82,13 @@ app.listen(3000);
 ### Node.js — manual verification
 
 ```javascript
-const { verifyWebhookSignature, processEvent } = require('ai-citation-sdk');
+const { verifyWebhookSignature } = require('@aiacta-org/ai-citation-sdk');
 
-// Verify a single incoming request
 app.post('/webhooks/ai-citations', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
     const valid = verifyWebhookSignature(
       req.body,                                    // raw Buffer
-      req.headers['x-ai-webhook-timestamp'],       // UNIX seconds
+      req.headers['x-ai-webhook-timestamp'],       // UNIX seconds string
       req.headers['x-ai-webhook-sig'],             // 'sha256=<hex>'
       process.env.WEBHOOK_SECRET
     );
@@ -164,8 +161,6 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 
 ## Citation Event Schema
 
-Each event your webhook receives looks like this:
-
 ```json
 {
   "schema_version": "1.0",
@@ -189,21 +184,20 @@ Each event your webhook receives looks like this:
 }
 ```
 
-**Privacy note:** The spec prohibits AI providers from including user IDs, full query text, or sub-country geodata in citation events. `user_country` is always country-level only.
+**Privacy note:** `user_country` is always country-level only. AI providers are prohibited from including user IDs or sub-country geodata (§3.3).
 
 ---
 
 ## Security Details
 
-The HMAC-SHA256 signature is computed over:
+The signature covers: `timestamp + "." + raw_json_body`
 
 ```
-signed_payload = timestamp + "." + raw_json_body
 signature = HMAC-SHA256(shared_secret, signed_payload)
-header = "sha256=" + hex(signature)
+header    = "sha256=" + hex(signature)
 ```
 
-The SDK uses `crypto.timingSafeEqual()` (Node.js), `hmac.compare_digest()` (Python), and `hmac.Equal()` (Go) — never plain string comparison — to prevent timing oracle attacks.
+The SDK uses `crypto.timingSafeEqual()` (Node.js), `hmac.compare_digest()` (Python), and `hmac.Equal()` (Go) to prevent timing oracle attacks.
 
 ---
 
@@ -211,11 +205,11 @@ The SDK uses `crypto.timingSafeEqual()` (Node.js), `hmac.compare_digest()` (Pyth
 
 ### Node.js
 
-| Export | Signature | Description |
-|--------|-----------|-------------|
-| `verifyWebhookSignature` | `(payload, timestamp, sigHeader, secret) → boolean` | Verifies HMAC-SHA256 signature. Throws if timestamp is outside ±300s window. |
-| `processEvent` | `(event, store, onEvent) → Promise<void>` | Processes an event with idempotency check. |
-| `createExpressMiddleware` | `({ secret, store, onEvent }) → middleware` | Drop-in Express route handler. |
+| Export | Description |
+|--------|-------------|
+| `verifyWebhookSignature(payload, timestamp, sigHeader, secret)` | Returns `boolean`. Throws `Error` if timestamp is outside ±300s. |
+| `processEvent(event, store, onEvent)` | Processes with idempotency check. |
+| `createExpressMiddleware({ secret, store, onEvent })` | Drop-in Express route handler. |
 
 ### Python
 
@@ -237,8 +231,8 @@ The SDK uses `crypto.timingSafeEqual()` (Node.js), `hmac.compare_digest()` (Pyth
 
 | Package | Purpose |
 |---------|---------|
-| [`ai-attribution-lint`](../ai-attribution-lint) | Validate your `ai-attribution.txt` |
-| [`crawl-manifest-client`](../crawl-manifest-client) | Query AI providers' crawl history |
+| [`@aiacta-org/ai-attribution-lint`](https://www.npmjs.com/package/@aiacta-org/ai-attribution-lint) | Validate your `ai-attribution.txt` |
+| [`@aiacta-org/crawl-manifest-client`](https://www.npmjs.com/package/@aiacta-org/crawl-manifest-client) | Query AI providers' crawl history |
 
 ---
 

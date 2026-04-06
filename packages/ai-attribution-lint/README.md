@@ -1,8 +1,8 @@
-# ai-attribution-lint
+# @aiacta-org/ai-attribution-lint
 
 > CLI validator for `ai-attribution.txt` files — the AIACTA open standard for AI content attribution (Proposal 4, §5.7).
 
-[![npm version](https://img.shields.io/npm/v/ai-attribution-lint.svg)](https://www.npmjs.com/package/ai-attribution-lint)
+[![npm version](https://img.shields.io/npm/v/@aiacta-org/ai-attribution-lint.svg)](https://www.npmjs.com/package/@aiacta-org/ai-attribution-lint)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
 [![AIACTA Spec](https://img.shields.io/badge/spec-AIACTA%2F1.0-orange.svg)](../../docs/proposals/proposal-4-ai-attribution-txt.md)
 
@@ -10,9 +10,9 @@
 
 ## What is this?
 
-`ai-attribution-lint` validates your `ai-attribution.txt` file — the plain-text file publishers place on their website to declare their preferences to AI systems. It checks syntax, required fields, valid values, SPDX licence identifiers, and webhook reachability.
+`@aiacta-org/ai-attribution-lint` validates your `ai-attribution.txt` file — the plain-text file publishers place on their website to declare their preferences to AI systems. It checks syntax, required fields, valid values, SPDX licence identifiers, and webhook reachability.
 
-Think of it as the `eslint` or `htmlhint` for the AIACTA standard.
+Think of it as the `eslint` for the AIACTA standard.
 
 ---
 
@@ -20,13 +20,13 @@ Think of it as the `eslint` or `htmlhint` for the AIACTA standard.
 
 ```bash
 # Run once without installing (recommended for quick checks)
-npx ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com
 
 # Install globally
-npm install -g ai-attribution-lint
+npm install -g @aiacta-org/ai-attribution-lint
 
 # Install as a dev dependency in a project
-npm install --save-dev ai-attribution-lint
+npm install --save-dev @aiacta-org/ai-attribution-lint
 ```
 
 ---
@@ -36,7 +36,7 @@ npm install --save-dev ai-attribution-lint
 ### Check a live website
 
 ```bash
-npx ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com
 ```
 
 The linter automatically fetches `/.well-known/ai-attribution.txt` (and falls back to `/ai-attribution.txt`).
@@ -44,13 +44,13 @@ The linter automatically fetches `/.well-known/ai-attribution.txt` (and falls ba
 ### Check a local file
 
 ```bash
-npx ai-attribution-lint ./ai-attribution.txt
+npx @aiacta-org/ai-attribution-lint ./ai-attribution.txt
 ```
 
 ### JSON output (for CI pipelines)
 
 ```bash
-npx ai-attribution-lint https://yourdomain.com --json
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json
 ```
 
 Output format:
@@ -72,7 +72,7 @@ Exit codes:
 ### Strict mode (treat warnings as errors)
 
 ```bash
-npx ai-attribution-lint https://yourdomain.com --strict
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com --strict
 ```
 
 ---
@@ -88,24 +88,24 @@ npx ai-attribution-lint https://yourdomain.com --strict
 | `Citation-Webhook` URL is reachable (HTTP HEAD request) | Warning if unreachable |
 | `Reward-Tier` is a valid enum value | Error |
 | `robots.txt` conflicts with `Allow-Purpose` | Warning |
-| Unknown fields are silently ignored (forward-compatibility) | — |
+| Unknown fields are silently ignored (forward-compatibility per §5.6) | — |
 
 ---
 
 ## Use in CI/CD
 
-Add to your GitHub Actions workflow to automatically validate your `ai-attribution.txt` on every deploy:
+Add to your GitHub Actions workflow to validate your `ai-attribution.txt` on every deploy:
 
 ```yaml
 - name: Validate ai-attribution.txt
-  run: npx ai-attribution-lint https://yourdomain.com --json
+  run: npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json
 ```
 
 Or validate a local file during build:
 
 ```yaml
 - name: Validate ai-attribution.txt
-  run: npx ai-attribution-lint ./public/.well-known/ai-attribution.txt
+  run: npx @aiacta-org/ai-attribution-lint ./public/.well-known/ai-attribution.txt
 ```
 
 ---
@@ -113,7 +113,7 @@ Or validate a local file during build:
 ## Node.js API
 
 ```javascript
-const { lint } = require('ai-attribution-lint');
+const { lint } = require('@aiacta-org/ai-attribution-lint');
 
 const result = await lint('https://yourdomain.com');
 // or: await lint('./ai-attribution.txt')
@@ -155,8 +155,8 @@ Place this file at `https://yourdomain.com/.well-known/ai-attribution.txt`.
 
 | Package | Purpose |
 |---------|---------|
-| [`ai-citation-sdk`](../ai-citation-sdk) | Receive and verify citation webhook events |
-| [`crawl-manifest-client`](../crawl-manifest-client) | Query AI providers' crawl history for your domain |
+| [`@aiacta-org/ai-citation-sdk`](https://www.npmjs.com/package/@aiacta-org/ai-citation-sdk) | Receive and verify citation webhook events |
+| [`@aiacta-org/crawl-manifest-client`](https://www.npmjs.com/package/@aiacta-org/crawl-manifest-client) | Query AI providers' crawl history for your domain |
 
 ---
 
@@ -164,4 +164,4 @@ Place this file at `https://yourdomain.com/.well-known/ai-attribution.txt`.
 
 Copyright © 2026 Eric Michel, PhD. Licensed under the [Apache License 2.0](../../LICENSE).
 
-AIACTA™ is a trademark of the AIACTA Foundation. This package is part of the [AIACTA open standard](https://github.com/aiacta-org/aiacta).
+AIACTA™ is part of the [AIACTA open standard](https://github.com/aiacta-org/aiacta).
