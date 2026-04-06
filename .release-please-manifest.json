@@ -1,5 +1,5 @@
 {
-  ".": "1.0.0",
+  ".": "1.0.1",
   "packages/ai-attribution-lint": "1.0.0",
   "packages/ai-citation-sdk": "1.0.0",
   "packages/crawl-manifest-client": "1.0.0",

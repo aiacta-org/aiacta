@@ -8,6 +8,15 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.1](https://github.com/aiacta-org/aiacta/compare/v1.0.0...v1.0.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* **ci:** dashboard vitest --passWithNoTests, jest --forceExit for Express packages; update READMEs to scoped names ([#28](https://github.com/aiacta-org/aiacta/issues/28)) ([6322e10](https://github.com/aiacta-org/aiacta/commit/6322e10e9e9f78b04c008552931401417df87709))
+* **release:** point Python test step at crawl-manifest-client where tests actually exist ([#29](https://github.com/aiacta-org/aiacta/issues/29)) ([849b69d](https://github.com/aiacta-org/aiacta/commit/849b69d7e7be249ed2d701901ecf712418360e8b))
+* **release:** scope npm packages to [@aiacta-org](https://github.com/aiacta-org), fix release.yml trigger ([#26](https://github.com/aiacta-org/aiacta/issues/26)) ([49662b6](https://github.com/aiacta-org/aiacta/commit/49662b6047787ba59705fc86bd7b2c201516c58b))
+
 ## 1.0.0 (2026-04-05)
 
 
