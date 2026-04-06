@@ -1,5 +1,5 @@
 {
-  "name": "ai-attribution-lint",
+  "name": "@aiacta-org/ai-attribution-lint",
   "version": "1.0.0",
   "description": "CLI validator for ai-attribution.txt files (AIACTA Proposal 4 §5.7)",
   "author": "Eric Michel",

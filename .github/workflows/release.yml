@@ -27,11 +27,21 @@
 name: Release
 
 on:
-  push:
-    # Only trigger on version tags matching v1.2.3 or v1.2.3-beta.1
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+  # Fires when release-please (or anyone) publishes a GitHub Release.
+  # This works even when the release was created by GITHUB_TOKEN —
+  # unlike push:tags which is suppressed by GitHub's anti-loop rule.
+  release:
+    types: [published]
+
+  # Allows manually triggering from the Actions tab.
+  # Use this to re-publish if a release failed, or to publish v1.0.0 now.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.0.0) — must match package.json'
+        required: true
+        default: '1.0.0'
+
 
 # Release jobs need write permission to create GitHub Releases.
 permissions:
@@ -46,37 +56,37 @@ jobs:
   # before we waste time running all the release steps.
   # ──────────────────────────────────────────────────────────────
   validate-tag:
-    name: Validate release tag
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.parse.outputs.version }}
-      is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
-    steps:
-      - name: Parse tag
-        id: parse
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          echo "Tag: $TAG"
+      name: Validate release version
+      runs-on: ubuntu-latest
+      outputs:
+        version: ${{ steps.parse.outputs.version }}
+        is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
+      steps:
+        - name: Parse version from release or manual input
+          id: parse
+          run: |
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              TAG="v${{ github.event.inputs.version }}"
+            else
+              # release event: github.ref_name is the tag (e.g. v1.0.0)
+              TAG="${{ github.ref_name }}"
+            fi
+            echo "Tag: $TAG"
 
-          # Must match vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-suffix
-          if ! echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-.+)?$'; then
-            echo "❌ Invalid tag format: $TAG"
-            echo "   Expected: vMAJOR.MINOR.PATCH (e.g. v1.1.0)"
-            exit 1
-          fi
+            if ! echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-.+)?$'; then
+              echo "Invalid tag format: $TAG"
+              exit 1
+            fi
 
-          VERSION="${TAG#v}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            VERSION="${TAG#v}"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          # Determine if this is a pre-release (has a suffix like -beta.1)
-          if echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+-'; then
-            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
-            echo "Pre-release: $TAG"
-          else
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
-            echo "Stable release: $TAG"
-          fi
-
+            if echo "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+-'; then
+              echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+            fi
+  
   # ──────────────────────────────────────────────────────────────
   # JOB 2 — PRE-RELEASE TEST RUN
   # Runs the full test suite one final time on the exact commit
@@ -168,7 +178,7 @@ jobs:
           fi
           echo "✅ Version $TAG_VERSION matches tag"
 
-      - name: Publish ai-attribution-lint
+      - name: Publish @aiacta-org/ai-attribution-lint
         run: npm publish --access public
         working-directory: packages/ai-attribution-lint
         env:
@@ -176,13 +186,13 @@ jobs:
           # actions/setup-node reads this and writes ~/.npmrc automatically.
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish ai-citation-sdk (Node.js)
+      - name: Publish @aiacta-org/ai-citation-sdk (Node.js)
         run: npm publish --access public
         working-directory: packages/ai-citation-sdk
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish crawl-manifest-client
+      - name: Publish @aiacta-org/crawl-manifest-client
         run: npm publish --access public
         working-directory: packages/crawl-manifest-client
         env:
@@ -337,9 +347,9 @@ jobs:
             ---
 
             **Packages published:**
-            - npm: `npm install ai-attribution-lint@${{ needs.validate-tag.outputs.version }}`
-            - npm: `npm install ai-citation-sdk@${{ needs.validate-tag.outputs.version }}`
-            - npm: `npm install crawl-manifest-client@${{ needs.validate-tag.outputs.version }}`
+            - npm: `npm install @aiacta-org/ai-attribution-lint@${{ needs.validate-tag.outputs.version }}`
+            - npm: `npm install @aiacta-org/ai-citation-sdk@${{ needs.validate-tag.outputs.version }}`
+            - npm: `npm install @aiacta-org/crawl-manifest-client@${{ needs.validate-tag.outputs.version }}`
             - PyPI: `pip install ai-citation-sdk==${{ needs.validate-tag.outputs.version }}`
 
             **Full Changelog:** https://github.com/aiacta-org/aiacta/blob/main/CHANGELOG.md

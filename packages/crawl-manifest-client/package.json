@@ -1,5 +1,5 @@
 {
-  "name": "crawl-manifest-client",
+  "name": "@aiacta-org/crawl-manifest-client",
   "version": "1.0.0",
   "description": "Client library for querying the AIACTA Crawl Manifest API with pagination, rate-limit handling, and local caching (Proposal 1 §2.2)",
   "author": "Eric Michel",

@@ -56,7 +56,8 @@ jobs:
       - uses: googleapis/release-please-action@v4
         with:
           # Uses the GitHub token automatically available in Actions
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
           # Release type: node for Node.js monorepos
           release-type: node

@@ -1,5 +1,5 @@
 {
-  "name": "ai-citation-sdk",
+  "name": "@aiacta-org/ai-citation-sdk",
   "version": "1.0.0",
   "description": "Webhook receiver SDK with signature verification, idempotency, and GDPR-compliant storage patterns (AIACTA Proposal 2 §3.4)",
   "author": "Eric Michel",
