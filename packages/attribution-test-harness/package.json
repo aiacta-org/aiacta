@@ -1,6 +1,6 @@
 {
   "name": "attribution-test-harness",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Docker sandbox for testing all AIACTA Proposals 1–4 against a simulated publisher ecosystem (§12.1)",
   "author": "Eric Michel",
   "scripts": {
@@ -8,5 +8,8 @@
     "down": "docker compose down",
     "test:e2e": "jest --testPathPattern=scenarios"
   },
-  "devDependencies": { "jest": "^29.0.0", "axios": "^1.6.0" }
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "axios": "^1.6.0"
+  }
 }

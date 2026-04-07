@@ -1,6 +1,6 @@
 {
   "name": "aac-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Reference server for the AI Attribution Collective (AAC) — manages provider enrollment, the citation ledger, distribution weight calculation, and payout scheduling (§7.3–7.5)",
   "author": "Eric Michel",
   "license": "Apache-2.0",

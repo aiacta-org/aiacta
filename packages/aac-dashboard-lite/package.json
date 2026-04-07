@@ -1,6 +1,6 @@
 {
   "name": "aac-dashboard-lite",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "No-code citation analytics dashboard for publishers — self-hosted React app (AIACTA §3.7, §9.4 Lite Tier)",
   "author": "Eric Michel",
   "license": "Apache-2.0",

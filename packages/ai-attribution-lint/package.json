@@ -1,6 +1,6 @@
 {
   "name": "@aiacta-org/ai-attribution-lint",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI validator for ai-attribution.txt files. The AIACTA open standard for AI content attribution and publisher rights (AIACTA Proposal 4, §5.7)",
   "author": "Eric Michel",
   "license": "Apache-2.0",

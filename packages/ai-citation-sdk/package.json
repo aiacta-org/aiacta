@@ -1,6 +1,6 @@
 {
   "name": "@aiacta-org/ai-citation-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Webhook receiver SDK for AIACTA citation events. HMAC-SHA256 signature verification, idempotency, and Express middleware (AIACTA Proposal 2, §3.4)",
   "author": "Eric Michel",
   "license": "Apache-2.0",

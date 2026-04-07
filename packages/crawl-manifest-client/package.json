@@ -1,6 +1,6 @@
 {
   "name": "@aiacta-org/crawl-manifest-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Client for the AIACTA Crawl Manifest API. Query AI providers to see which of your pages were crawled, when, and for what purpose (AIACTA Proposal 1, §2.2)",
   "author": "Eric Michel",
   "license": "Apache-2.0",

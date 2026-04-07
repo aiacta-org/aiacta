@@ -1,6 +1,6 @@
 {
   "name": "referrer-middleware",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Express and WSGI middleware that enforces AIACTA Proposal 3 referrer-policy standards for AI platform outbound links, and optionally appends UTM parameters (§4.2–4.4)",
   "author": "Eric Michel",
   "main": "src/node/index.js",
