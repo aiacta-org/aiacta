@@ -17,18 +17,7 @@
     ".": {
       "changelog-path": "CHANGELOG.md",
       "release-type": "node",
-      "include-component-in-tag": false,
-      "extra-files": [
-        "packages/ai-attribution-lint/package.json",
-        "packages/ai-citation-sdk/package.json",
-        "packages/crawl-manifest-client/package.json",
-        "packages/aac-server/package.json",
-        "packages/aac-dashboard-lite/package.json",
-        "packages/vwp-gateway/package.json",
-        "packages/referrer-middleware/package.json",
-        "packages/honeypot-verifier/package.json",
-        "packages/attribution-test-harness/package.json"
-      ]
+      "include-component-in-tag": false
     }
   }
 }
