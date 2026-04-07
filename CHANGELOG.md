@@ -8,6 +8,18 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.1](https://github.com/aiacta-org/aiacta/compare/v1.0.0...v1.0.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* **ci:** dashboard vitest --passWithNoTests, jest --forceExit for Express packages; update READMEs to scoped names ([#28](https://github.com/aiacta-org/aiacta/issues/28)) ([6322e10](https://github.com/aiacta-org/aiacta/commit/6322e10e9e9f78b04c008552931401417df87709))
+* **npm:** add keywords, homepage, repository, and bugs fields to published packages ([#30](https://github.com/aiacta-org/aiacta/issues/30)) ([830bb80](https://github.com/aiacta-org/aiacta/commit/830bb806af4eb3498231df215393c6e004028fb1))
+* **release:** linked versioning — release-please now syncs all package versions together ([#32](https://github.com/aiacta-org/aiacta/issues/32)) ([193fe3b](https://github.com/aiacta-org/aiacta/commit/193fe3be5f4302c402b86ad38ba211a99c5ea2f4))
+* **release:** point Python test step at crawl-manifest-client where tests actually exist ([#29](https://github.com/aiacta-org/aiacta/issues/29)) ([849b69d](https://github.com/aiacta-org/aiacta/commit/849b69d7e7be249ed2d701901ecf712418360e8b))
+* **release:** scope npm packages to [@aiacta-org](https://github.com/aiacta-org), fix release.yml trigger ([#26](https://github.com/aiacta-org/aiacta/issues/26)) ([49662b6](https://github.com/aiacta-org/aiacta/commit/49662b6047787ba59705fc86bd7b2c201516c58b))
+* **release:** sync all package.json versions from root before test ([#35](https://github.com/aiacta-org/aiacta/issues/35)) ([7a037b7](https://github.com/aiacta-org/aiacta/commit/7a037b7515bb5bc0d20e3ab257c8b1d41eb8346c))
+
 ## 1.0.0 (2026-04-05)
 
 
