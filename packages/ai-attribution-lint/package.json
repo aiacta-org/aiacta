@@ -1,17 +1,52 @@
 {
   "name": "@aiacta-org/ai-attribution-lint",
   "version": "1.0.0",
-  "description": "CLI validator for ai-attribution.txt files (AIACTA Proposal 4 §5.7)",
+  "description": "CLI validator for ai-attribution.txt files. The AIACTA open standard for AI content attribution and publisher rights (AIACTA Proposal 4, §5.7)",
   "author": "Eric Michel",
   "license": "Apache-2.0",
-  "bin": { "ai-attribution-lint": "./src/cli.js" },
+  "homepage": "https://github.com/aiacta-org/aiacta/tree/main/packages/ai-attribution-lint#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aiacta-org/aiacta.git",
+    "directory": "packages/ai-attribution-lint"
+  },
+  "bugs": {
+    "url": "https://github.com/aiacta-org/aiacta/issues"
+  },
+  "keywords": [
+    "aiacta",
+    "ai-attribution",
+    "ai-attribution-txt",
+    "attribution",
+    "content-attribution",
+    "ai-transparency",
+    "ai-copyright",
+    "publisher-rights",
+    "content-creators",
+    "open-standard",
+    "linter",
+    "validator",
+    "cli",
+    "web-standard",
+    "robots-txt",
+    "ai-crawl",
+    "spdx",
+    "content-license"
+  ],
+  "bin": {
+    "ai-attribution-lint": "./src/cli.js"
+  },
   "main": "./src/index.js",
-  "scripts": { "test": "jest" },
+  "scripts": {
+    "test": "jest"
+  },
   "dependencies": {
     "axios": "^1.6.0",
     "spdx-license-ids": "^3.0.0",
     "chalk": "^5.0.0",
     "yargs": "^17.0.0"
   },
-  "devDependencies": { "jest": "^29.0.0" }
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
 }

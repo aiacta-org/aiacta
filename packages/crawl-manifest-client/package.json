@@ -1,10 +1,48 @@
 {
   "name": "@aiacta-org/crawl-manifest-client",
   "version": "1.0.0",
-  "description": "Client library for querying the AIACTA Crawl Manifest API with pagination, rate-limit handling, and local caching (Proposal 1 §2.2)",
+  "description": "Client for the AIACTA Crawl Manifest API. Query AI providers to see which of your pages were crawled, when, and for what purpose (AIACTA Proposal 1, §2.2)",
   "author": "Eric Michel",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/aiacta-org/aiacta/tree/main/packages/crawl-manifest-client#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aiacta-org/aiacta.git",
+    "directory": "packages/crawl-manifest-client"
+  },
+  "bugs": {
+    "url": "https://github.com/aiacta-org/aiacta/issues"
+  },
+  "keywords": [
+    "aiacta",
+    "ai-attribution",
+    "crawl-manifest",
+    "ai-crawler",
+    "ai-transparency",
+    "attribution",
+    "content-attribution",
+    "publisher-rights",
+    "open-standard",
+    "ai-crawl",
+    "content-creators",
+    "api-client",
+    "pagination",
+    "rate-limiting",
+    "content-hash",
+    "ai-copyright",
+    "web-standard",
+    "crawl-audit"
+  ],
   "main": "./src/node/index.js",
-  "scripts": { "test": "jest" },
-  "dependencies": { "axios": "^1.6.0", "node-cache": "^5.1.0" },
-  "devDependencies": { "jest": "^29.0.0", "nock": "^14.0.11" }
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "node-cache": "^5.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "nock": "^14.0.11"
+  }
 }

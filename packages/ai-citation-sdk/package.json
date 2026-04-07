@@ -1,8 +1,38 @@
 {
   "name": "@aiacta-org/ai-citation-sdk",
   "version": "1.0.0",
-  "description": "Webhook receiver SDK with signature verification, idempotency, and GDPR-compliant storage patterns (AIACTA Proposal 2 §3.4)",
+  "description": "Webhook receiver SDK for AIACTA citation events. HMAC-SHA256 signature verification, idempotency, and Express middleware (AIACTA Proposal 2, §3.4)",
   "author": "Eric Michel",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/aiacta-org/aiacta/tree/main/packages/ai-citation-sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aiacta-org/aiacta.git",
+    "directory": "packages/ai-citation-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/aiacta-org/aiacta/issues"
+  },
+  "keywords": [
+    "aiacta",
+    "ai-attribution",
+    "citation",
+    "citation-webhook",
+    "webhook",
+    "sdk",
+    "attribution",
+    "ai-transparency",
+    "content-attribution",
+    "publisher-rights",
+    "open-standard",
+    "hmac",
+    "signature-verification",
+    "idempotency",
+    "express-middleware",
+    "content-creators",
+    "ai-copyright",
+    "web-standard"
+  ],
   "main": "./src/node/index.js",
   "scripts": {
     "test": "jest"

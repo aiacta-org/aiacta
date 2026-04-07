@@ -1,10 +1,11 @@
 # @aiacta-org/ai-attribution-lint
 
-> CLI validator for `ai-attribution.txt` files — the AIACTA open standard for AI content attribution (Proposal 4, §5.7).
+> CLI validator for `ai-attribution.txt` files. The [AIACTA](https://github.com/mobeloper/aiacta/blob/main/publications/AIACTA_FrameworkV1_0_EricMichel_2026March24.pdf) open standard for AI content attribution (Proposal 4, §5.7).
 
 [![npm version](https://img.shields.io/npm/v/@aiacta-org/ai-attribution-lint.svg)](https://www.npmjs.com/package/@aiacta-org/ai-attribution-lint)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
 [![AIACTA Spec](https://img.shields.io/badge/spec-AIACTA%2F1.0-orange.svg)](../../docs/proposals/proposal-4-ai-attribution-txt.md)
+
 
 ---
 

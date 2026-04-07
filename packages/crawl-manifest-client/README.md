@@ -1,6 +1,6 @@
 # @aiacta-org/crawl-manifest-client
 
-> Query any AIACTA-compliant AI provider's Crawl Manifest API — see exactly which of your pages were crawled, when, and for what purpose (Proposal 1, §2.2).
+> Query any AIACTA-compliant AI provider's Crawl Manifest API. See exactly which of your pages were crawled, when, and for what purpose ([AIACTA](https://github.com/mobeloper/aiacta/blob/main/publications/AIACTA_FrameworkV1_0_EricMichel_2026March24.pdf) Proposal 1, §2.2).
 
 [![npm version](https://img.shields.io/npm/v/@aiacta-org/crawl-manifest-client.svg)](https://www.npmjs.com/package/@aiacta-org/crawl-manifest-client)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)

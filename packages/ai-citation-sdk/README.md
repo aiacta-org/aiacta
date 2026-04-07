@@ -1,6 +1,6 @@
 # @aiacta-org/ai-citation-sdk
 
-> Webhook receiver SDK for AIACTA citation events — verifies signatures, handles idempotency, and provides ready-to-use Express middleware (Proposal 2, §3.4).
+> Webhook receiver SDK for [AIACTA](https://github.com/mobeloper/aiacta/blob/main/publications/AIACTA_FrameworkV1_0_EricMichel_2026March24.pdf) citation events. Verifies signatures, handles idempotency, and provides ready-to-use Express middleware (Proposal 2, §3.4).
 
 [![npm version](https://img.shields.io/npm/v/@aiacta-org/ai-citation-sdk.svg)](https://www.npmjs.com/package/@aiacta-org/ai-citation-sdk)
 [![PyPI version](https://img.shields.io/pypi/v/ai-citation-sdk.svg)](https://pypi.org/project/ai-citation-sdk/)
