@@ -99,6 +99,32 @@ jobs:
     needs: [validate-tag]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Sync all package versions from root package.json
+        run: |
+          ROOT_VERSION=$(node -p "require('./package.json').version")
+          echo "Root version: $ROOT_VERSION"
+          for pkg in \
+            packages/ai-attribution-lint \
+            packages/ai-citation-sdk \
+            packages/crawl-manifest-client \
+            packages/aac-server \
+            packages/aac-dashboard-lite \
+            packages/vwp-gateway \
+            packages/referrer-middleware \
+            packages/honeypot-verifier \
+            packages/attribution-test-harness; do
+            node -e "
+              const fs = require('fs');
+              const path = './$pkg/package.json';
+              const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+              pkg.version = '$ROOT_VERSION';
+              fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+              console.log('  ✓ ' + path + ' → ' + '$ROOT_VERSION');
+            "
+          done
+
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
@@ -157,6 +183,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Sync all package versions from root package.json
+        run: |
+          ROOT_VERSION=$(node -p "require('./package.json').version")
+          echo "Publishing version: $ROOT_VERSION"
+          for pkg in \
+            packages/ai-attribution-lint \
+            packages/ai-citation-sdk \
+            packages/crawl-manifest-client \
+            packages/aac-server \
+            packages/aac-dashboard-lite \
+            packages/vwp-gateway \
+            packages/referrer-middleware \
+            packages/honeypot-verifier \
+            packages/attribution-test-harness; do
+            node -e "
+              const fs = require('fs');
+              const path = './$pkg/package.json';
+              const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+              pkg.version = '$ROOT_VERSION';
+              fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+              console.log('  ✓ ' + path + ' → ' + '$ROOT_VERSION');
+            "
+          done
 
       - name: Set up Node.js with npm registry auth
         uses: actions/setup-node@v4
