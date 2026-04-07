@@ -1,0 +1,114 @@
+# ============================================================
+#  version-sync.yml  —  Keep all package.json files in sync
+# ============================================================
+#
+#  WHAT THIS DOES:
+#  Runs every time a commit lands on main that changes the root
+#  package.json version (i.e. when the release-please Release PR
+#  is merged). It reads the new root version and writes it to:
+#    - Every packages/*/package.json
+#    - packages/ai-citation-sdk/src/python/setup.py
+#  Then commits and pushes the changes back to main.
+#
+#  WHY THIS IS NEEDED:
+#  release-please only updates the root package.json and CHANGELOG.
+#  It does not update subpackage files. This workflow fills that gap
+#  so every file in the repo always reflects the current version.
+#
+#  THE [skip ci] TAG:
+#  The commit this workflow pushes uses the message
+#  "chore: sync package versions to X.X.X [skip ci]"
+#  The [skip ci] tag tells GitHub Actions not to run CI workflows
+#  on this commit. This prevents an infinite trigger loop.
+#
+#  PERMISSIONS REQUIRED:
+#  This workflow needs write access to push the sync commit.
+#  It uses the RELEASE_PLEASE_TOKEN (the PAT you created earlier)
+#  so that the push can trigger the release.yml workflow if needed.
+#  If you do not have RELEASE_PLEASE_TOKEN set, replace it with
+#  GITHUB_TOKEN — the push will work but will not trigger other
+#  workflows (which is fine here since we use [skip ci] anyway).
+# ============================================================
+
+name: Version Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Only runs when the root package.json changes —
+      # which is exactly when release-please merges a Release PR.
+      - 'package.json'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  sync:
+    name: Sync all package versions from root
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          # Use the PAT so the push back to main can trigger downstream
+          # workflows if needed. Falls back to GITHUB_TOKEN if not set.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          fetch-depth: 2   # need previous commit to compare versions
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Check if version actually changed
+        id: version_check
+        run: |
+          # Read the current root version
+          CURRENT=$(node -p "require('./package.json').version")
+          echo "current_version=$CURRENT" >> "$GITHUB_OUTPUT"
+
+          # Read the version from the previous commit
+          git show HEAD~1:package.json > /tmp/prev_package.json 2>/dev/null || echo '{"version":"none"}' > /tmp/prev_package.json
+          PREVIOUS=$(node -p "require('/tmp/prev_package.json').version" 2>/dev/null || echo "none")
+          echo "previous_version=$PREVIOUS" >> "$GITHUB_OUTPUT"
+
+          if [ "$CURRENT" = "$PREVIOUS" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Version unchanged ($CURRENT) — nothing to sync"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Version changed: $PREVIOUS → $CURRENT"
+          fi
+
+      - name: Run version sync script
+        if: steps.version_check.outputs.changed == 'true'
+        run: node scripts/sync-versions.js
+
+      - name: Commit and push synced versions
+        if: steps.version_check.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.version_check.outputs.current_version }}"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stage only the files the sync script touches
+          git add packages/*/package.json
+          git add packages/ai-citation-sdk/src/python/setup.py
+
+          # Check if there is actually anything to commit
+          if git diff --staged --quiet; then
+            echo "All subpackage files already at $VERSION — nothing to commit"
+            exit 0
+          fi
+
+          # [skip ci] prevents CI from running on this housekeeping commit
+          git commit -m "chore: sync all package versions to $VERSION [skip ci]"
+          git push origin main
+
+          echo "✓ Pushed version sync commit for $VERSION"

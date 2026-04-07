@@ -1,5 +1,6 @@
 {
   "name": "aiacta",
+  "version": "1.0.1",
   "author": "Eric Michel",
   "private": true,
   "workspaces": [
@@ -16,11 +17,11 @@
   "scripts": {
     "test": "npm --workspaces test --if-present",
     "build": "npm --workspaces run build --if-present",
-    "lint": "npm --workspaces run lint --if-present"
+    "lint": "npm --workspaces run lint --if-present",
+    "sync-versions": "node scripts/sync-versions.js"
   },
   "devDependencies": {
     "eslint": "^9.0.0",
     "jest": "^29.0.0"
-  },
-  "version": "1.0.1"
+  }
 }
