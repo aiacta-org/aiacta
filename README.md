@@ -10,8 +10,7 @@
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 ---
-## The Open Specification Standard for Global AI Content Transparency and Attribution 
-
+## The Open Specification Standard for Global AI Content Transparency and Attribution
 
 **Welcome to The AI Architecture for Content Transparency and Attribution (AIACTA) Framework**  
 
