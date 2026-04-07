@@ -169,16 +169,28 @@ jobs:
 
       # Verify the package.json version matches the git tag.
       # Prevents publishing version 1.0.0 when the tag is v1.1.0.
-      - name: Verify version matches tag
+      - name: Verify all package versions match release tag
         run: |
           TAG_VERSION="${{ needs.validate-tag.outputs.version }}"
-          PKG_VERSION=$(node -p "require('./packages/ai-attribution-lint/package.json').version")
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "❌ Tag version ($TAG_VERSION) does not match package.json ($PKG_VERSION)"
-            echo "   Bump the version in all package.json files before tagging."
+          FAILED=0
+          for pkg in \
+            packages/ai-attribution-lint \
+            packages/ai-citation-sdk \
+            packages/crawl-manifest-client; do
+            PKG_VERSION=$(node -p "require('./$pkg/package.json').version")
+            if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+              echo "❌  $pkg: expected $TAG_VERSION, found $PKG_VERSION"
+              FAILED=1
+            else
+              echo "✅  $pkg: $PKG_VERSION"
+            fi
+          done
+          if [ "$FAILED" -eq 1 ]; then
+            echo ""
+            echo "Version mismatch. release-please should have updated all package.json files."
+            echo "Check that extra-files is configured in .release-please-config.json"
             exit 1
-          fi
-          echo "✅ Version $TAG_VERSION matches tag"
+          fi          
 
       - name: Publish @aiacta-org/ai-attribution-lint
         run: npm publish --access public
