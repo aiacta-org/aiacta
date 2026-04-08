@@ -15,7 +15,7 @@
 const fs   = require('fs');
 const path = require('path');
 
-// ── Read the single source of truth ──────────────────────────────────────────
+// ── Read the single source of truth 
 const rootPkg = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
 const version = rootPkg.version;
 
@@ -26,7 +26,7 @@ if (!version) {
 
 console.log(`\nSyncing all packages to version ${version}\n`);
 
-// ── Subpackages to update ─────────────────────────────────────────────────────
+// ── Subpackages to update on new release  
 const packages = [
   'packages/ai-attribution-lint',
   'packages/ai-citation-sdk',
@@ -60,7 +60,7 @@ for (const pkgDir of packages) {
   }
 }
 
-// ── Python setup.py ───────────────────────────────────────────────────────────
+// ── Python setup.py 
 const setupPath = path.join(__dirname, '../packages/ai-citation-sdk/src/python/setup.py');
 if (fs.existsSync(setupPath)) {
   let setup    = fs.readFileSync(setupPath, 'utf8');
@@ -78,5 +78,5 @@ if (fs.existsSync(setupPath)) {
   console.warn('  SKIP  packages/ai-citation-sdk/src/python/setup.py (not found)');
 }
 
-// ── Summary ───────────────────────────────────────────────────────────────────
+// ── Summary 
 console.log(`\n${changed} file(s) updated to ${version}\n`);
