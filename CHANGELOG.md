@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.5](https://github.com/aiacta-org/aiacta/compare/v1.0.4...v1.0.5) (2026-04-08)
+
+
+### Bug Fixes
+
+* **release:** create draft releases so dashboard asset can be uploaded before publishing ([#52](https://github.com/aiacta-org/aiacta/issues/52)) ([9c9374d](https://github.com/aiacta-org/aiacta/commit/9c9374d0f031647688821292e5d41637aef699ad))
+
 ## [1.0.4](https://github.com/aiacta-org/aiacta/compare/v1.0.3...v1.0.4) (2026-04-08)
 
 
