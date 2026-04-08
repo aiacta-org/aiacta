@@ -49,8 +49,7 @@
     ".": {
       "changelog-path": "CHANGELOG.md",
       "release-type": "node",
-      "include-component-in-tag": false,
-      "draft": true
+      "include-component-in-tag": false
     }
   }
 }

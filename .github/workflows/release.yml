@@ -372,16 +372,20 @@ jobs:
 
   # ──────────────────────────────────────────────────────────────
   # JOB 6 — FINALIZE GITHUB RELEASE
-  # release-please created a DRAFT release. This job:
-  #   1. Downloads the dashboard zip built in Job 5
-  #   2. Uploads it to the DRAFT release (drafts are mutable — no 422)
-  #   3. Updates the release notes with install commands
-  #   4. Publishes the release (draft → published)
   #
-  # WHY DRAFT: GitHub marks a release as immutable the moment it is
-  # published. Any upload attempt after that returns HTTP 422.
-  # Creating it as a draft keeps it mutable until we explicitly
-  # publish it as the final step of this job.
+  # WHY WE DELETE AND RECREATE:
+  # release-please creates a GitHub Release the moment the Release PR
+  # merges — before this workflow even starts. By the time Job 6 runs
+  # (after human approval of Jobs 3+4), that release is already
+  # published and GitHub has marked it immutable. No upload API —
+  # not gh CLI, not softprops, not the raw REST API — can add assets
+  # to an immutable published release. HTTP 422 is returned always.
+  #
+  # The only reliable fix: delete the immutable release (the git tag
+  # is preserved), then create a brand-new release from the same tag
+  # with the dashboard asset included IN the create command. Assets
+  # are never "uploaded to an existing release" — they are part of
+  # the creation itself, so immutability never applies.
   # ──────────────────────────────────────────────────────────────
   create-github-release:
     name: Finalize and publish GitHub Release
@@ -405,29 +409,16 @@ jobs:
           name: dashboard-release-zip
           path: ./release-assets/
 
-      - name: Upload dashboard zip to draft release
+      - name: Delete immutable release and recreate with assets
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          # Must use RELEASE_PLEASE_TOKEN (PAT) — GITHUB_TOKEN cannot
+          # delete releases created by other tokens in some repo configs.
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           VERSION="${{ needs.validate-tag.outputs.version }}"
           ASSET=$(ls ./release-assets/aac-dashboard-*.zip 2>/dev/null | head -1)
 
-          if [ -z "$ASSET" ]; then
-            echo "No dashboard zip found in release-assets/ — skipping asset upload"
-          else
-            echo "Uploading $ASSET to draft release v$VERSION..."
-            # --clobber replaces the file if it was uploaded in a previous attempt
-            gh release upload "v$VERSION" "$ASSET" --clobber
-            echo "✓ Dashboard zip uploaded"
-          fi
-
-      - name: Update release notes with install commands
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ needs.validate-tag.outputs.version }}"
-
-          # Extract this version's section from CHANGELOG.md
+          # ── Extract changelog notes for this version ──────────────
           NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} /^## \[/{if(found) exit} found{print}" CHANGELOG.md)
           if [ -z "$NOTES" ]; then
             NOTES="See CHANGELOG.md for full details."
@@ -448,14 +439,34 @@ jobs:
 
           **Full Changelog:** https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md"
 
-          gh release edit "v$VERSION" --notes "$BODY"
-          echo "✓ Release notes updated"
+          # ── Delete the immutable release-please release ───────────
+          # --yes skips the confirmation prompt.
+          # The git tag v$VERSION is NOT deleted — only the release object.
 
-      - name: Publish release (draft → published)
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ needs.validate-tag.outputs.version }}"
-          gh release edit "v$VERSION" --draft=false
-          echo "✓ Release v$VERSION published"
-          echo "  https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
+          echo "Deleting immutable release v$VERSION..."
+          gh release delete "v${VERSION}" --yes || {
+            echo "Note: release delete failed or release did not exist — continuing"
+          }
+
+          # ── Recreate from the same tag with asset included ─────────
+          # Including the asset IN the create command bypasses the
+          # immutability restriction entirely — assets are part of the
+          # creation, not uploaded afterward.
+
+          echo "Creating release v$VERSION..."
+          if [ -n "$ASSET" ]; then
+            gh release create "v${VERSION}" \
+              --title "v${VERSION}" \
+              --notes "$BODY" \
+              "$ASSET"
+            echo "✓ Release v${VERSION} created with dashboard asset"
+          else
+            echo "No dashboard zip found — creating release without asset"
+            gh release create "v${VERSION}" \
+              --title "v${VERSION}" \
+              --notes "$BODY"
+            echo "✓ Release v${VERSION} created"
+          fi
+
+          echo ""
+          echo "Release URL: https://github.com/${{ github.repository }}/releases/tag/v${VERSION}"
