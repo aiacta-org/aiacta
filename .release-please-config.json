@@ -4,20 +4,53 @@
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true,
   "changelog-sections": [
-    { "type": "feat", "section": "### Added", "hidden": false },
-    { "type": "fix", "section": "### Fixed", "hidden": false },
-    { "type": "security", "section": "### Security", "hidden": false },
-    { "type": "perf", "section": "### Performance", "hidden": false },
-    { "type": "docs", "section": "### Documentation", "hidden": false },
-    { "type": "refactor", "section": "### Changed", "hidden": false },
-    { "type": "chore", "section": "### Maintenance", "hidden": true },
-    { "type": "test", "section": "### Tests", "hidden": true }
+    {
+      "type": "feat",
+      "section": "### Added",
+      "hidden": false
+    },
+    {
+      "type": "fix",
+      "section": "### Fixed",
+      "hidden": false
+    },
+    {
+      "type": "security",
+      "section": "### Security",
+      "hidden": false
+    },
+    {
+      "type": "perf",
+      "section": "### Performance",
+      "hidden": false
+    },
+    {
+      "type": "docs",
+      "section": "### Documentation",
+      "hidden": false
+    },
+    {
+      "type": "refactor",
+      "section": "### Changed",
+      "hidden": false
+    },
+    {
+      "type": "chore",
+      "section": "### Maintenance",
+      "hidden": true
+    },
+    {
+      "type": "test",
+      "section": "### Tests",
+      "hidden": true
+    }
   ],
   "packages": {
     ".": {
       "changelog-path": "CHANGELOG.md",
       "release-type": "node",
-      "include-component-in-tag": false
+      "include-component-in-tag": false,
+      "draft": true
     }
   }
 }

@@ -27,11 +27,12 @@
 name: Release
 
 on:
-  # Fires when release-please (or anyone) publishes a GitHub Release.
-  # This works even when the release was created by GITHUB_TOKEN —
-  # unlike push:tags which is suppressed by GitHub's anti-loop rule.
+  # Fires when release-please creates a DRAFT GitHub Release.
+  # release-please now creates drafts (draft:true in .release-please-config.json)
+  # so our workflow can upload the dashboard asset before publishing.
+  # Using "created" instead of "published" — a draft fires "created" not "published".
   release:
-    types: [published]
+    types: [created]
 
   # Allows manually triggering from the Actions tab.
   # Use this to re-publish if a release failed, or to publish v1.0.0 now.
@@ -370,13 +371,20 @@ jobs:
           retention-days: 90
 
   # ──────────────────────────────────────────────────────────────
-  # JOB 6 — CREATE GITHUB RELEASE
-  # Creates the GitHub Release page with:
-  #   - Release notes extracted from CHANGELOG.md
-  #   - Dashboard zip attached as a downloadable asset
+  # JOB 6 — FINALIZE GITHUB RELEASE
+  # release-please created a DRAFT release. This job:
+  #   1. Downloads the dashboard zip built in Job 5
+  #   2. Uploads it to the DRAFT release (drafts are mutable — no 422)
+  #   3. Updates the release notes with install commands
+  #   4. Publishes the release (draft → published)
+  #
+  # WHY DRAFT: GitHub marks a release as immutable the moment it is
+  # published. Any upload attempt after that returns HTTP 422.
+  # Creating it as a draft keeps it mutable until we explicitly
+  # publish it as the final step of this job.
   # ──────────────────────────────────────────────────────────────
   create-github-release:
-    name: Upload assets to existing GitHub Release
+    name: Finalize and publish GitHub Release
     runs-on: ubuntu-latest
     needs:
       - validate-tag
@@ -389,17 +397,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Full history needed to read CHANGELOG.md
           fetch-depth: 0
-
-
-      # Extract the release notes for THIS version from CHANGELOG.md.
-      # The CHANGELOG format is:
-      #   ## [1.1.0] — 2026-04-01
-      #   ... notes ...
-      #   ## [1.0.0] — 2026-03-29
-      # This script extracts everything between the current version
-      # header and the next version header.
 
       - name: Download dashboard artifact
         uses: actions/download-artifact@v4
@@ -407,33 +405,25 @@ jobs:
           name: dashboard-release-zip
           path: ./release-assets/
 
-      # The GitHub Release already exists — release-please created and
-      # published it before this workflow ran. We must upload the asset
-      # to the existing release rather than creating a new one.
-      # softprops/action-gh-release fails here because it tries to
-      # re-publish the release, which GitHub rejects as immutable.
-      # The gh CLI can upload assets to an already-published release.
-      - name: Upload dashboard zip to existing release
+      - name: Upload dashboard zip to draft release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ needs.validate-tag.outputs.version }}"
-          ASSET=$(ls ./release-assets/aac-dashboard-*.zip | head -1)
+          ASSET=$(ls ./release-assets/aac-dashboard-*.zip 2>/dev/null | head -1)
 
           if [ -z "$ASSET" ]; then
-            echo "No dashboard zip found in release-assets/"
-            exit 1
+            echo "No dashboard zip found in release-assets/ — skipping asset upload"
+          else
+            echo "Uploading $ASSET to draft release v$VERSION..."
+            # --clobber replaces the file if it was uploaded in a previous attempt
+            gh release upload "v$VERSION" "$ASSET" --clobber
+            echo "✓ Dashboard zip uploaded"
           fi
-
-          echo "Uploading $ASSET to release v$VERSION..."
-          gh release upload "v$VERSION" "$ASSET" --clobber
-
-          echo "✓ Asset uploaded successfully"
-          echo "Release: https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
 
       - name: Update release notes with install commands
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ needs.validate-tag.outputs.version }}"
 
@@ -443,5 +433,29 @@ jobs:
             NOTES="See CHANGELOG.md for full details."
           fi
 
-          # Append install instructions to the release notes
           BODY="${NOTES}
+
+          ---
+
+          **Install this release:**
+
+          \`\`\`bash
+          npm install @aiacta-org/ai-attribution-lint@${VERSION}
+          npm install @aiacta-org/ai-citation-sdk@${VERSION}
+          npm install @aiacta-org/crawl-manifest-client@${VERSION}
+          pip install ai-citation-sdk==${VERSION}
+          \`\`\`
+
+          **Full Changelog:** https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md"
+
+          gh release edit "v$VERSION" --notes "$BODY"
+          echo "✓ Release notes updated"
+
+      - name: Publish release (draft → published)
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.validate-tag.outputs.version }}"
+          gh release edit "v$VERSION" --draft=false
+          echo "✓ Release v$VERSION published"
+          echo "  https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
