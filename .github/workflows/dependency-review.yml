@@ -39,7 +39,7 @@ jobs:
     name: Review dependency changes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # actions/dependency-review-action compares the dependency
       # tree before and after the PR, and fails if any new
