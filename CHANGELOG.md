@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.6](https://github.com/aiacta-org/aiacta/compare/v1.0.5...v1.0.6) (2026-04-08)
+
+
+### Bug Fixes
+
+* **release:** delete immutable release and recreate with asset, bypasses HTTP 422 permanently ([#54](https://github.com/aiacta-org/aiacta/issues/54)) ([46919df](https://github.com/aiacta-org/aiacta/commit/46919df8cd26b83fcb6048c5cb9cb7ad6cb31a20))
+
 ## [1.0.5](https://github.com/aiacta-org/aiacta/compare/v1.0.4...v1.0.5) (2026-04-08)
 
 
