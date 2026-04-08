@@ -585,17 +585,21 @@ Reference Issues with 'Closes #N' or 'Refs #N'.
 #### Write your commits like this and the CHANGELOG.md writes itself:
 
 ```bash
-git commit -m "feat(sdk): add Ed25519 signature verification"
-# → goes under "### Added" in CHANGELOG, bumps minor version
-
 git commit -m "fix(aac-server): handle empty citation batches correctly"
-# → goes under "### Fixed" in CHANGELOG, bumps patch version
+# Bug Fix → goes under "### Fixed" in CHANGELOG, bumps patch version (1.0.0 → 1.0.1)
 
-git commit -m "docs: update publisher deployment guide"
-# → goes under "### Documentation" in CHANGELOG, no version bump
+git commit -m "feat(sdk): add Ed25519 signature verification"
+# New Feature → goes under "### Added" in CHANGELOG, bumps minor version (1.0.0 → 1.1.0)
 
 git commit -m "feat!: rename provider field in crawl manifest schema"
-# → goes under "### Added" with breaking change note, bumps MAJOR version
+# Breaking Change→ goes under "### Added" with breaking change note, bumps MAJOR version (1.0.0 → 2.0.0)
+
+git commit -m "docs: update publisher deployment guide"
+# Docs Only → goes under "### Documentation" in CHANGELOG, no version bump
+
+git commit -m "chore: update release flow"
+# CI/Tooling → goes under "### CI/Tooling" in CHANGELOG, no version bump
+
 ```
 
 **The ! after the type means "breaking change." The format is type(scope): description — scope is optional but helpful.**
