@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.2](https://github.com/aiacta-org/aiacta/compare/v1.0.1...v1.0.2) (2026-04-08)
+
+
+### Bug Fixes
+
+* **sync:** enable new release ([#40](https://github.com/aiacta-org/aiacta/issues/40)) ([eaaddaa](https://github.com/aiacta-org/aiacta/commit/eaaddaa7b51f9de4aef5ce9362b1ff6d0dc2a079))
+
 ## [1.0.1](https://github.com/aiacta-org/aiacta/compare/v1.0.0...v1.0.1) (2026-04-07)
 
 
