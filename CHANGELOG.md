@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.3](https://github.com/aiacta-org/aiacta/compare/v1.0.2...v1.0.3) (2026-04-08)
+
+
+### Bug Fixes
+
+* **release:** upload dashboard asset to existing release using gh CLI instead of softprops ([#48](https://github.com/aiacta-org/aiacta/issues/48)) ([96dca3d](https://github.com/aiacta-org/aiacta/commit/96dca3dd41c6bfd3c56b5a488834256f6e2fa219))
+
 ## [1.0.2](https://github.com/aiacta-org/aiacta/compare/v1.0.1...v1.0.2) (2026-04-08)
 
 
