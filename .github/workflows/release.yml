@@ -186,8 +186,9 @@ jobs:
 
       - name: Sync all package versions from root package.json
         run: |
-          ROOT_VERSION=$(node -p "require('./package.json').version")
-          echo "Publishing version: $ROOT_VERSION"
+          # ROOT_VERSION=$(node -p "require('./package.json').version")
+          VERSION="${{ needs.validate-tag.outputs.version }}"
+          echo "Publishing & Setting all packages to $VERSION"
           for pkg in \
             packages/ai-attribution-lint \
             packages/ai-citation-sdk \
@@ -202,11 +203,17 @@ jobs:
               const fs = require('fs');
               const path = './$pkg/package.json';
               const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
-              pkg.version = '$ROOT_VERSION';
+              pkg.version = '$VERSION';
               fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
-              console.log('  ✓ ' + path + ' → ' + '$ROOT_VERSION');
+              console.log('  ✓ ' + path + ' → ' + '$VERSION');
             "
           done
+
+          # Also sync Python so setup.py matches in case build-dashboard-release reads it
+          sed -i "s/version='[^']*'/version='$VERSION'/" \
+            packages/ai-citation-sdk/src/python/setup.py
+          echo "✓ All versions set to $VERSION"
+
 
       - name: Set up Node.js with npm registry auth
         uses: actions/setup-node@v4
@@ -294,23 +301,37 @@ jobs:
       - name: Install build tools
         run: pip install build twine
 
+      - name: Inject correct version into setup.py
+        run: |
+          VERSION="${{ needs.validate-tag.outputs.version }}"
+          sed -i "s/version='[^']*'/version='$VERSION'/" \
+            packages/ai-citation-sdk/src/python/setup.py
+          echo "setup.py version set to $VERSION"
+          grep "version=" packages/ai-citation-sdk/src/python/setup.py
+
       - name: Build Python package
         run: python -m build
         working-directory: packages/ai-citation-sdk/src/python
 
-      # Verify the distribution before uploading.
-      # twine check catches common packaging errors.
+      - name: Verify distribution version matches release tag
+        run: |
+          VERSION="${{ needs.validate-tag.outputs.version }}"
+          WHEEL=$(ls packages/ai-citation-sdk/src/python/dist/*.whl | head -1)
+          if [[ "$WHEEL" != *"$VERSION"* ]]; then
+            echo "ERROR: Built wheel $WHEEL does not match expected version $VERSION"
+            exit 1
+          fi
+          echo "✓ Wheel version matches release tag: $VERSION"
+
       - name: Verify distribution packages
         run: twine check packages/ai-citation-sdk/src/python/dist/*
 
-      # Publish using OIDC (no stored API token required).
-      # Requires the trusted publisher to be configured on PyPI (see above).
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: packages/ai-citation-sdk/src/python/dist/
-          # verbose: true shows upload progress
           verbose: true
+
 
   # ──────────────────────────────────────────────────────────────
   # JOB 5 — BUILD DASHBOARD FOR RELEASE
