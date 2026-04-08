@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.4](https://github.com/aiacta-org/aiacta/compare/v1.0.3...v1.0.4) (2026-04-08)
+
+
+### Bug Fixes
+
+* **release:** inject version from release tag into setup.py and package.json at build time — eliminates race condition with version-sync workflow ([#50](https://github.com/aiacta-org/aiacta/issues/50)) ([7bd636d](https://github.com/aiacta-org/aiacta/commit/7bd636d670b7982ad669b1f08917688264c69730))
+
 ## [1.0.3](https://github.com/aiacta-org/aiacta/compare/v1.0.2...v1.0.3) (2026-04-08)
 
 
