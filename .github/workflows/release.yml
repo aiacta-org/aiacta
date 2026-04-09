@@ -417,7 +417,7 @@ jobs:
           pip install ai-citation-sdk==${VERSION}
           \`\`\`
 
-          **Dashboard build:** Download \`aac-dashboard-${VERSION}.zip\` from the [Actions run](${RUN_URL}) (available for 90 days).
+          **Dashboard build:** Download \`aac-dashboard-${VERSION}.zip\` from the Artifacts section in [Actions run](${RUN_URL}) (available for 90 days).
 
           **Full Changelog:** https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md"
 
