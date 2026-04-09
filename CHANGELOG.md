@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.7](https://github.com/aiacta-org/aiacta/compare/v1.0.6...v1.0.7) (2026-04-09)
+
+
+### Bug Fixes
+
+* **release:** aac dashboard released as asset artifact in Actions run, with release notes updated ([#56](https://github.com/aiacta-org/aiacta/issues/56)) ([ef08b2d](https://github.com/aiacta-org/aiacta/commit/ef08b2d8c03348a55e72a27c79b343314734bcb8))
+
 ## [1.0.6](https://github.com/aiacta-org/aiacta/compare/v1.0.5...v1.0.6) (2026-04-08)
 
 
