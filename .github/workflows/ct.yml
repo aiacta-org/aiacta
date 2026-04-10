@@ -357,16 +357,21 @@ jobs:
 
       - name: Check ai-attribution.txt at well-known path
         run: |
+          # FIX: Use separate curl calls instead of parsing a combined response.
+          # The previous approach used -w "\n---HTTP_CODE:%{http_code}" and then
+          # grep to split body from status code. The separator string was mangled
+          # by YAML multi-line processing, causing grep to receive a newline in
+          # its option argument and exit code 2.
+          # Fix: two separate curl calls — one for headers, one for body.
           echo "Checking https://aiacta.org/.well-known/ai-attribution.txt..."
-          RESPONSE=$(curl -sS \
+          URL="https://aiacta.org/.well-known/ai-attribution.txt"
+
+          # Get HTTP status code only
+          HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
             --max-time 15 \
             --retry 3 \
             --retry-delay 5 \
-            -w "\n---HTTP_CODE:%{http_code}" \
-            "https://aiacta.org/.well-known/ai-attribution.txt")
-
-          HTTP_CODE=$(echo "$RESPONSE" | grep "---HTTP_CODE:" | cut -d: -f2)
-          BODY=$(echo "$RESPONSE" | grep -v "---HTTP_CODE:")
+            "$URL")
 
           echo "HTTP status: $HTTP_CODE"
 
@@ -377,20 +382,30 @@ jobs:
           fi
           echo "✓ File is reachable (HTTP 200)"
 
-          # Verify it contains the required Schema-Version field
+          # Get file body separately
+          BODY=$(curl -sS --max-time 15 "$URL")
+
+          # Verify Schema-Version field is present
           if echo "$BODY" | grep -qi "Schema-Version:"; then
             echo "✓ Schema-Version field present"
           else
             echo "❌ Schema-Version field missing from ai-attribution.txt"
             echo "   File content received:"
-            echo "$BODY"
+            echo "$BODY" | head -20
             exit 1
           fi
 
-          # Verify Content-Type is text/plain
-          CONTENT_TYPE=$(curl -sS -I \
-            "https://aiacta.org/.well-known/ai-attribution.txt" \
-            | grep -i "content-type:" | head -1)
+          # Check for other recommended fields (warnings only — not blocking)
+          for field in "Contact:" "Preferred-Attribution:" "Allow-Purpose:" "Content-License:"; do
+            if echo "$BODY" | grep -qi "$field"; then
+              echo "✓ $field present"
+            else
+              echo "⚠️  $field not found (recommended but not required)"
+            fi
+          done
+
+          # Verify Content-Type header is text/plain
+          CONTENT_TYPE=$(curl -sS -I --max-time 10 "$URL" | grep -i "^content-type:" | head -1)
           echo "Content-Type: $CONTENT_TYPE"
           if echo "$CONTENT_TYPE" | grep -qi "text/plain"; then
             echo "✓ Content-Type is text/plain"
@@ -408,6 +423,27 @@ jobs:
             echo "✓ Fallback path also works (HTTP 200)"
           else
             echo "⚠️  Fallback path returned HTTP $HTTP_CODE (non-blocking — well-known path is primary)"
+          fi
+
+      - name: Validate ai-attribution.txt with linter
+        run: |
+          echo "Validating with @aiacta-org/ai-attribution-lint..."
+          # --json is required to see output — the CLI is silent on success without it
+          OUTPUT=$(npx @aiacta-org/ai-attribution-lint https://aiacta.org --json 2>&1)
+          echo "$OUTPUT"
+
+          # Exit code 2 means the file could not be fetched — that is a hard failure
+          # Exit code 1 means linting errors — that is also a failure
+          # Exit code 0 means passed (possibly with warnings shown in JSON)
+          EXIT=$?
+          if [ $EXIT -eq 0 ]; then
+            echo "✓ ai-attribution-lint: no errors"
+          elif [ $EXIT -eq 1 ]; then
+            echo "❌ ai-attribution-lint found errors — check output above"
+            exit 1
+          else
+            echo "❌ Could not fetch ai-attribution.txt (exit $EXIT)"
+            exit 1
           fi
 
   # ──────────────────────────────────────────────────────────────
@@ -440,7 +476,7 @@ jobs:
           PY
 
   # ──────────────────────────────────────────────────────────────
-  # JOB 5 — E2E STAGING (future)
+  # JOB 5 — E2E STAGING ( future TODO )
   # Run the full E2E test suite against it on a schedule.
   # ──────────────────────────────────────────────────────────────
 # e2e-staging:
