@@ -23,8 +23,10 @@ Content-License: CC-BY-SA-4.0
 ### 2. Validate it
 
 ```bash
-npx ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com
 ```
+
+> You must install first, type 'y' + enter.
 
 ### 3. Set up your webhook receiver
 

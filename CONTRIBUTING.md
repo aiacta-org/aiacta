@@ -482,7 +482,7 @@ Look at any package's test file. Do any tests have `todo()` instead of
 actual assertions? Fill them in.
 
 **Option B — Improve an error message (30 minutes):**
-Run `npx ai-attribution-lint` on an invalid file and read the error messages.
+Run `npx @aiacta-org/ai-attribution-lint` on an invalid file and read the error messages.
 Are any of them confusing? Find the rule file that generates them in
 `packages/ai-attribution-lint/src/rules/` and make the message clearer.
 
@@ -598,7 +598,19 @@ git commit -m "docs: update publisher deployment guide"
 # Docs Only → goes under "### Documentation" in CHANGELOG, no version bump
 
 git commit -m "chore: update release flow"
-# CI/Tooling → goes under "### CI/Tooling" in CHANGELOG, no version bump
+# Maintenance → goes under "### Maintenance" in CHANGELOG, no version bump
+
+git commit -m "security: update release flow"
+# Security → goes under "### Security" in CHANGELOG, no version bump
+
+git commit -m "perf: update release flow"
+# Performance → goes under "### Performance" in CHANGELOG, no version bump
+
+git commit -m "refactor: update release flow"
+# Changed → goes under "### Changed" in CHANGELOG, no version bump
+
+git commit -m "test: update release flow"
+# Tests → goes under "### Tests" in CHANGELOG, no version bump
 
 ```
 

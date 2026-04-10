@@ -164,7 +164,7 @@ jobs:
   # public npm registry under the @aiacta-org scope (or unscoped).
   #
   # PACKAGES PUBLISHED:
-  #   ai-attribution-lint     (CLI tool — npx ai-attribution-lint)
+  #   ai-attribution-lint     (CLI tool — npx @aiacta-org/ai-attribution-lint)
   #   ai-citation-sdk         (webhook receiver SDK)
   #   crawl-manifest-client   (API client)
   #

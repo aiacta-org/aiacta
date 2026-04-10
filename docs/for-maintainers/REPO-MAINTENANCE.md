@@ -837,7 +837,7 @@ npm view ai-citation-sdk version       # should show 1.1.0
 
 # Verify install works:
 npm install ai-attribution-lint@1.1.0
-npx ai-attribution-lint --version     # should print 1.1.0
+npx @aiacta-org/ai-attribution-lint --version     # should print 1.1.0
 ```
 
 **Step 14 — Delete the release branch**

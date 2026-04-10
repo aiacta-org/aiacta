@@ -1,46 +1,47 @@
-# ai-attribution.txt — Example for a mid-size publisher
+# ai-attribution.txt - Example for a mid-size publisher
 # Place at: https://yourdomain.com/.well-known/ai-attribution.txt
 # Format: https://aiacta.org/spec/v1.0
 #
-# Validate with: npx ai-attribution-lint https://yourdomain.com
+# Validate with: npx @aiacta-org/ai-attribution-lint https://yourdomain.com
 
 Schema-Version: 1.0
 
-# ── Contact ──────────────────────────────────────────────────────────────────
+# - Contact ---------------------------------
 Contact: ai-licensing@yourdomain.com
 Contact: https://yourdomain.com/ai-licensing
 
-# ── Attribution preferences ───────────────────────────────────────────────────
+# - Attribution preferences --------------------------
 Preferred-Attribution: Your Publication Name (yourdomain.com)
 Canonical-Author: The Editorial Team
 
-# ── Crawl purpose preferences ─────────────────────────────────────────────────
+# - Crawl purpose preferences -------------------------
+# Note: robots.txt Disallow takes precedence over Allow-Purpose 
 Allow-Purpose: rag
 Allow-Purpose: index
 Disallow-Purpose: training
-# Note: robots.txt Disallow takes precedence over Allow-Purpose
 
-# ── Citation preferences ─────────────────────────────────────────────────────
+
+# - Citation preferences ---------------------------
 Require-Citation: true
 Require-Source-Link: true
 Citation-Format: title-and-url
 
-# ── UTM opt-in (optional — AI platforms will append tracking parameters) ──────
+# - UTM opt-in (optional - AI platforms will append tracking parameters) ---
 Allow-UTM-Append: true
 Preferred-UTM-Source: yourpublication
 
-# ── Webhook (push notifications of citations in real time) ───────────────────
+# - Webhook (push notifications of citations in real time) ----------
 Citation-Webhook: https://yourdomain.com/webhooks/ai-citations
 
-# ── Crawl frequency hint ─────────────────────────────────────────────────────
+# - Crawl frequency hint ---------------------------
 Recrawl-After: 24h
 
-# ── Licensing ────────────────────────────────────────────────────────────────
+# - Licensing --------------------------------
 Licensing-Contact: data-licensing@yourdomain.com
 Licensing-URL: https://yourdomain.com/ai-licensing-terms
 
-# ── AAC reward framework opt-in (§7) ─────────────────────────────────────────
+# - AAC reward framework opt-in (§7) ---------------------
 Reward-Tier: standard
 
-# ── Machine-readable content license (SPDX identifier) ───────────────────────
+# Machine-readable content license (SPDX identifier) 
 Content-License: CC-BY-ND-4.0

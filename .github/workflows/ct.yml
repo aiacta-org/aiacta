@@ -1,0 +1,459 @@
+# ============================================================
+#  ct.yml  —  AIACTA Continuous Testing (CT) Pipeline
+# ============================================================
+#
+#  WHAT THIS DOES:
+#  Verifies that everything live in production actually works.
+#  Runs AFTER a release (against the real published packages)
+#  and on a weekly schedule to catch silent regressions.
+#
+#  JOBS:
+#    1. smoke-npm        — Install each npm package fresh from the
+#                          registry and verify it loads and runs
+#    2. smoke-pypi       — Install Python SDK from PyPI and verify
+#                          it imports and signature function works
+#    3. ping-aiacta-org  — Verify https://aiacta.org is reachable
+#                          and serving ai-attribution.txt correctly
+#    4. ct-status        — Single pass/fail gate (mirrors ci-status)
+#
+#  TRIGGERS:
+#    - After release.yml completes successfully (automatic)
+#    - Weekly every Monday at 09:00 UTC (scheduled)
+#    - Manual trigger from Actions tab (workflow_dispatch)
+#
+#  HOW TO RUN ONLY CT FOR THE CURRENT RELEASE:
+#    Go to Actions → "Continuous Testing (CT)" → "Run workflow"
+#    Leave all inputs blank — it reads the latest published versions
+#    from npm and PyPI automatically.
+# ============================================================
+
+name: Continuous Testing (CT)
+
+on:
+  # Run automatically after every successful release
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+
+  # Run weekly — catches regressions from dependency updates,
+  # CDN changes, or registry issues that have nothing to do with
+  # your own code changes
+  schedule:
+    - cron: '0 9 * * 1'   # Every Monday at 09:00 UTC
+
+  # Manual trigger — run CT at any time without a new release
+  workflow_dispatch:
+    inputs:
+      npm_version:
+        description: 'npm package version to test (leave blank = latest published)'
+        required: false
+        default: ''
+      pypi_version:
+        description: 'PyPI package version to test (leave blank = latest published)'
+        required: false
+        default: ''
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 1 — npm SMOKE TESTS
+  #
+  # Installs each published package fresh from the npm registry
+  # and runs a minimum viable check on each one:
+  #
+  #   @aiacta-org/ai-attribution-lint
+  #     → npx the CLI against the live aiacta.org domain
+  #     → verifies exit code 0 and JSON output parses
+  #
+  #   @aiacta-org/ai-citation-sdk
+  #     → require() the package and call verifyWebhookSignature
+  #     → verifies HMAC logic works end-to-end
+  #
+  #   @aiacta-org/crawl-manifest-client
+  #     → require() the package and instantiate CrawlManifestClient
+  #     → verifies the constructor and date range validation work
+  # ──────────────────────────────────────────────────────────────
+  smoke-npm:
+    name: npm smoke tests
+    runs-on: ubuntu-latest
+    # Skip if the triggering release workflow failed
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      # ── Resolve which version to test ────────────────────────
+      - name: Resolve npm version to test
+        id: version
+        run: |
+          INPUT="${{ github.event.inputs.npm_version }}"
+          if [ -n "$INPUT" ]; then
+            echo "version=$INPUT" >> "$GITHUB_OUTPUT"
+            echo "Testing manually specified version: $INPUT"
+          else
+            # Fetch the latest published version from npm registry
+            LATEST=$(npm view @aiacta-org/ai-attribution-lint version 2>/dev/null)
+            echo "version=$LATEST" >> "$GITHUB_OUTPUT"
+            echo "Testing latest published version: $LATEST"
+          fi
+
+      # ── @aiacta-org/ai-attribution-lint ──────────────────────
+      - name: "Smoke: ai-attribution-lint — CLI runs against live aiacta.org"
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Installing @aiacta-org/ai-attribution-lint@${VERSION}..."
+          npm install -g @aiacta-org/ai-attribution-lint@${VERSION}
+
+          echo "Running linter against https://aiacta.org..."
+          # Run with --json so we can parse the output regardless of exit code
+          # Exit code 1 is acceptable (warnings/errors in the file)
+          # Exit code 2 means the file could not be fetched — that is a real failure
+          set +e
+          OUTPUT=$(ai-attribution-lint https://aiacta.org --json 2>&1)
+          EXIT_CODE=$?
+          set -e
+
+          echo "Exit code: $EXIT_CODE"
+          echo "Output: $OUTPUT"
+
+          if [ "$EXIT_CODE" -eq 2 ]; then
+            echo "❌ FAIL: Could not fetch ai-attribution.txt from https://aiacta.org"
+            echo "   This means either the site is down or the file is missing."
+            exit 1
+          fi
+
+          # Verify output is valid JSON
+          echo "$OUTPUT" | node -e "
+            const chunks = [];
+            process.stdin.on('data', c => chunks.push(c));
+            process.stdin.on('end', () => {
+              const raw = chunks.join('');
+              // Extract JSON block (output may have non-JSON lines before it)
+              const match = raw.match(/\{[\s\S]*\}/);
+              if (!match) { console.error('No JSON found in output'); process.exit(1); }
+              const r = JSON.parse(match[0]);
+              console.log('errors:', r.errors.length, '| warnings:', r.warnings.length);
+              console.log('✓ ai-attribution-lint output is valid JSON');
+            });
+          " <<< "$OUTPUT"
+
+          echo "✓ @aiacta-org/ai-attribution-lint@${VERSION} smoke test passed"
+
+      # ── @aiacta-org/ai-citation-sdk ──────────────────────────
+      - name: "Smoke: ai-citation-sdk — signature verification works"
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Installing @aiacta-org/ai-citation-sdk@${VERSION}..."
+
+          mkdir -p /tmp/sdk-smoke && cd /tmp/sdk-smoke
+          npm init -y --quiet > /dev/null
+          npm install @aiacta-org/ai-citation-sdk@${VERSION} --quiet
+
+          node -e "
+            const { verifyWebhookSignature } = require('@aiacta-org/ai-citation-sdk');
+            const crypto = require('crypto');
+
+            const secret    = 'ct-smoke-test-secret';
+            const timestamp = String(Math.floor(Date.now() / 1000));
+            const payload   = Buffer.from(JSON.stringify({
+              schema_version: '1.0',
+              provider: 'smoke-test',
+              event_type: 'citation.generated',
+              event_id: 'ct_smoke_001',
+              idempotency_key: 'idem_ct_001',
+              timestamp: new Date().toISOString().replace(/:\d\dZ$/, ':00Z'),
+              citation: { url: 'https://aiacta.org', citation_type: 'factual_source' },
+              attribution: { display_type: 'inline_link', user_interface: 'chat' }
+            }));
+
+            const signed = Buffer.concat([Buffer.from(timestamp + '.'), payload]);
+            const sig = 'sha256=' + crypto.createHmac('sha256', secret)
+              .update(signed).digest('hex');
+
+            const valid = verifyWebhookSignature(payload, timestamp, sig, secret);
+            if (!valid) { console.error('Signature verification returned false'); process.exit(1); }
+            console.log('✓ verifyWebhookSignature works correctly');
+
+            // Test that tampered payload is rejected
+            const tampered = Buffer.from('tampered');
+            const invalid  = verifyWebhookSignature(tampered, timestamp, sig, secret);
+            if (invalid)  { console.error('Tampered payload was not rejected'); process.exit(1); }
+            console.log('✓ Tampered payload correctly rejected');
+
+            console.log('✓ @aiacta-org/ai-citation-sdk smoke test passed');
+          "
+
+      # ── @aiacta-org/crawl-manifest-client ────────────────────
+      - name: "Smoke: crawl-manifest-client — client instantiates and validates"
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Installing @aiacta-org/crawl-manifest-client@${VERSION}..."
+
+          mkdir -p /tmp/client-smoke && cd /tmp/client-smoke
+          npm init -y --quiet > /dev/null
+          npm install @aiacta-org/crawl-manifest-client@${VERSION} --quiet
+
+          node -e "
+            const { CrawlManifestClient, MAX_RANGE_DAYS } = require('@aiacta-org/crawl-manifest-client');
+
+            // Verify the export shape
+            if (typeof CrawlManifestClient !== 'function') {
+              console.error('CrawlManifestClient is not a constructor'); process.exit(1);
+            }
+            if (MAX_RANGE_DAYS !== 90) {
+              console.error('MAX_RANGE_DAYS should be 90, got:', MAX_RANGE_DAYS); process.exit(1);
+            }
+            console.log('✓ Exports are correct');
+
+            // Verify the client can be instantiated
+            const client = new CrawlManifestClient({
+              provider: 'anthropic',
+              apiKey: 'ct-test-key'
+            });
+            if (!client) { console.error('Client failed to instantiate'); process.exit(1); }
+            console.log('✓ Client instantiates correctly');
+
+            // Verify 90-day range validation throws on >90 days
+            try {
+              client._validateRange('2026-01-01T00:00:00Z', '2026-04-30T00:00:00Z');
+              console.error('Expected RangeError for >90 days, got none'); process.exit(1);
+            } catch (e) {
+              if (e instanceof RangeError) {
+                console.log('✓ Range validation correctly rejects >90 day window');
+              } else {
+                throw e;
+              }
+            }
+
+            // Verify valid range passes
+            client._validateRange('2026-03-01T00:00:00Z', '2026-03-31T00:00:00Z');
+            console.log('✓ Valid 30-day range accepted');
+
+            console.log('✓ @aiacta-org/crawl-manifest-client smoke test passed');
+          "
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 2 — PyPI SMOKE TEST
+  #
+  # Installs the Python SDK from PyPI and verifies:
+  #   - The package imports without error
+  #   - verify_webhook_signature function works correctly
+  #   - A tampered payload is correctly rejected
+  # ──────────────────────────────────────────────────────────────
+  smoke-pypi:
+    name: PyPI smoke test
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Resolve PyPI version to test
+        id: version
+        run: |
+          INPUT="${{ github.event.inputs.pypi_version }}"
+          if [ -n "$INPUT" ]; then
+            echo "version=$INPUT" >> "$GITHUB_OUTPUT"
+            echo "Testing manually specified version: $INPUT"
+          else
+            # Fetch the latest published version from PyPI JSON API
+            LATEST=$(python3 -c "
+          import urllib.request, json
+          url = 'https://pypi.org/pypi/ai-citation-sdk/json'
+          with urllib.request.urlopen(url) as r:
+              data = json.load(r)
+          print(data['info']['version'])
+            ")
+            echo "version=$LATEST" >> "$GITHUB_OUTPUT"
+            echo "Testing latest published version: $LATEST"
+          fi
+
+      - name: Install ai-citation-sdk from PyPI
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Installing ai-citation-sdk==${VERSION}..."
+          pip install "ai-citation-sdk==${VERSION}" --quiet
+
+      - name: "Smoke: Python SDK — signature verification works"
+        run: |
+          python3 - << 'PYEOF'
+          import hmac, hashlib, time
+
+          from aiacta.signature import verify_webhook_signature
+
+          secret    = 'ct-smoke-test-secret'
+          timestamp = str(int(time.time()))
+          payload   = b'{"event_type":"citation.generated","provider":"smoke-test"}'
+
+          signed    = (timestamp + '.').encode() + payload
+          sig_hex   = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
+          sig_header = 'sha256=' + sig_hex
+
+          # Valid signature should return True
+          result = verify_webhook_signature(payload, timestamp, sig_header, secret)
+          assert result is True, f"Expected True, got {result}"
+          print("✓ Valid signature accepted")
+
+          # Tampered payload should return False
+          tampered = b'tampered payload'
+          result2  = verify_webhook_signature(tampered, timestamp, sig_header, secret)
+          assert result2 is False, f"Tampered payload should return False, got {result2}"
+          print("✓ Tampered payload correctly rejected")
+
+          # Stale timestamp should raise ValueError
+          old_ts = str(int(time.time()) - 400)
+          try:
+              verify_webhook_signature(payload, old_ts, sig_header, secret)
+              assert False, "Expected ValueError for stale timestamp"
+          except ValueError:
+              print("✓ Stale timestamp correctly rejected")
+
+          print(f"✓ ai-citation-sdk PyPI smoke test passed")
+          PYEOF
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 3 — SITE & ai-attribution.txt HEALTH CHECK
+  #
+  # Verifies that https://aiacta.org is live and that the
+  # ai-attribution.txt file is reachable, well-formed, and
+  # contains the required Schema-Version field.
+  #
+  # Runs weekly to catch domain expiry, CDN failures, or
+  # accidental deletion of the file.
+  # ──────────────────────────────────────────────────────────────
+  ping-aiacta-org:
+    name: Ping aiacta.org and ai-attribution.txt
+    runs-on: ubuntu-latest
+    # This job always runs — even on weekly schedule when no release triggered
+    if: always()
+
+    steps:
+      - name: Check https://aiacta.org is reachable
+        run: |
+          echo "Checking https://aiacta.org..."
+          HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+            --max-time 15 \
+            --retry 3 \
+            --retry-delay 5 \
+            "https://aiacta.org")
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+            echo "✓ https://aiacta.org returned HTTP $HTTP_CODE"
+          else
+            echo "❌ https://aiacta.org returned HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Check ai-attribution.txt at well-known path
+        run: |
+          echo "Checking https://aiacta.org/.well-known/ai-attribution.txt..."
+          RESPONSE=$(curl -sS \
+            --max-time 15 \
+            --retry 3 \
+            --retry-delay 5 \
+            -w "\n---HTTP_CODE:%{http_code}" \
+            "https://aiacta.org/.well-known/ai-attribution.txt")
+
+          HTTP_CODE=$(echo "$RESPONSE" | grep "---HTTP_CODE:" | cut -d: -f2)
+          BODY=$(echo "$RESPONSE" | grep -v "---HTTP_CODE:")
+
+          echo "HTTP status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "❌ ai-attribution.txt returned HTTP $HTTP_CODE"
+            echo "   The file must be served at /.well-known/ai-attribution.txt"
+            exit 1
+          fi
+          echo "✓ File is reachable (HTTP 200)"
+
+          # Verify it contains the required Schema-Version field
+          if echo "$BODY" | grep -qi "Schema-Version:"; then
+            echo "✓ Schema-Version field present"
+          else
+            echo "❌ Schema-Version field missing from ai-attribution.txt"
+            echo "   File content received:"
+            echo "$BODY"
+            exit 1
+          fi
+
+          # Verify Content-Type is text/plain
+          CONTENT_TYPE=$(curl -sS -I \
+            "https://aiacta.org/.well-known/ai-attribution.txt" \
+            | grep -i "content-type:" | head -1)
+          echo "Content-Type: $CONTENT_TYPE"
+          if echo "$CONTENT_TYPE" | grep -qi "text/plain"; then
+            echo "✓ Content-Type is text/plain"
+          else
+            echo "⚠️  Content-Type is not text/plain — AI crawlers may reject it"
+          fi
+
+      - name: Check fallback path /ai-attribution.txt
+        run: |
+          echo "Checking fallback https://aiacta.org/ai-attribution.txt..."
+          HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+            --max-time 10 \
+            "https://aiacta.org/ai-attribution.txt")
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✓ Fallback path also works (HTTP 200)"
+          else
+            echo "⚠️  Fallback path returned HTTP $HTTP_CODE (non-blocking — well-known path is primary)"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 4 — CT GATE
+  # Single status check that aggregates all CT jobs.
+  # ──────────────────────────────────────────────────────────────
+  ct-status:
+    name: "CT — all checks passed"
+    runs-on: ubuntu-latest
+    needs: [smoke-npm, smoke-pypi, ping-aiacta-org]
+    if: always()
+    steps:
+      - name: Evaluate CT results
+        run: |
+          python3 - << 'PY'
+          import sys, json
+          results = json.loads("""${{ toJSON(needs) }}""")
+          passed, failed = [], []
+          for job, data in results.items():
+              r = data.get('result', 'unknown')
+              (passed if r in ('success', 'skipped') else failed).append((job, r))
+          for j, r in passed:
+              print(f"  PASS  {j}: {r}")
+          for j, r in failed:
+              print(f"  FAIL  {j}: {r}")
+          if failed:
+              print(f"\n{len(failed)} CT check(s) failed — something is broken in production.")
+              sys.exit(1)
+          print(f"\nAll {len(passed)} CT checks passed.")
+          PY
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 5 — E2E STAGING (future)
+  # Run the full E2E test suite against it on a schedule.
+  # ──────────────────────────────────────────────────────────────
+# e2e-staging:
+#     name: E2E tests against staging
+#     runs-on: ubuntu-latest
+#     env:
+#       PROVIDER_URL: https://aiacta-mock-provider.onrender.com
+#       PUBLISHER_URL: https://aiacta-mock-publisher.onrender.com
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: '20.x'
+#       - run: npm install
+#       - run: npm run test:e2e
+#         working-directory: packages/attribution-test-harness

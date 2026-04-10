@@ -21,8 +21,8 @@ See [`shared/schemas/ai-attribution-txt.schema.json`](../../shared/schemas/ai-at
 ## Validation
 
 ```bash
-npx ai-attribution-lint https://example.com
-npx ai-attribution-lint ./path/to/ai-attribution.txt --json --strict
+npx @aiacta-org/ai-attribution-lint https://example.com
+npx @aiacta-org/ai-attribution-lint ./path/to/ai-attribution.txt --json --strict
 ```
 
 Source: [`packages/ai-attribution-lint`](../../packages/ai-attribution-lint)

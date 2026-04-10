@@ -214,7 +214,7 @@ Go to: https://aiacta.org/validator
 
 Or if you have Node.js installed:
 ```bash
-npx ai-attribution-lint /path/to/your/ai-attribution.txt
+npx @aiacta-org/ai-attribution-lint /path/to/your/ai-attribution.txt
 ```
 
 The validator will tell you if any fields are incorrect and explain how to fix them.
@@ -278,7 +278,7 @@ After uploading, validate that AI systems can find it:
 # https://aiacta.org/validator?url=https://yourwebsite.com
 
 # Command line:
-npx ai-attribution-lint https://yourwebsite.com
+npx @aiacta-org/ai-attribution-lint https://yourwebsite.com
 ```
 
 If you see "1 warning, 0 errors" or "0 warnings, 0 errors", you are done.

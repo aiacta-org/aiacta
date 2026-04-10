@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ai-attribution-lint CLI entry point (§5.7)
- * Usage: npx ai-attribution-lint <url|file>
+ * Usage: npx @aiacta-org/ai-attribution-lint <url|file>
  */
 'use strict';
 const yargs = require('yargs');

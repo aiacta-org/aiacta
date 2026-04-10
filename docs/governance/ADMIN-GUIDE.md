@@ -936,7 +936,7 @@ Preparation
 Testing
 [ ] Run full test suite
 [ ] Run end-to-end test harness
-[ ] Test validator CLI: npx ai-attribution-lint [test URL]
+[ ] Test validator CLI: npx @aiacta-org/ai-attribution-lint [test URL]
 [ ] Verify Go tests: go test ./...
 [ ] Verify Python tests
 

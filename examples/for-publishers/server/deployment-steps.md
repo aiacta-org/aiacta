@@ -56,7 +56,7 @@ curl http://localhost:3000/.well-known/ai-attribution.txt
 
 Validate it with the AIACTA linter:
 ```bash
-npx ai-attribution-lint http://localhost:3000
+npx @aiacta-org/ai-attribution-lint http://localhost:3000
 ```
 
 ### 4. Deploy to Render (simplest free hosting)
@@ -120,16 +120,73 @@ Content-License: All-Rights-Reserved
 
 ### 2. Upload to your static host
 
+
+The file ai-attribution.txt you created goes into a .well-known/ folder in your website's source files. 
+
+
 Upload the file so it is served at:
 ```
 https://yourdomain.com/.well-known/ai-attribution.txt
 ```
 
-Supported hosts: AWS S3, Cloudflare Pages, Vercel, Netlify, GitHub Pages.
+Supported hosts: AWS S3, Cloudflare Pages, Vercel, Netlify, GitHub Pages, Lovable, Replit, Bubble, Glide, Base44, etc.
 
 For S3 or similar: create a `.well-known/` directory and upload `ai-attribution.txt` inside it.
 
 Make sure the file is served with Content-Type: `text/plain`.
+
+
+If you have a React.js website like Versel, Lovable, etc. you probably need to place your ai-attribution.txt at the  public/ directory. Move it there:
+```
+public/.well-known/ai-attribution.txt
+```
+
+Then add the correct **Content-Type** header:
+Content-Type: text/plain; charset=utf-8
+
+
+**Vercel:** In `vercel.json`:
+```json
+{
+  "headers": [
+    {
+      "source": "/.well-known/ai-attribution.txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+    }
+  ]
+}
+```
+
+**Netlify:** In `netlify.toml`:
+```
+toml[[headers]]
+  for = "/.well-known/ai-attribution.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+```
+
+
+**Cloudflare:** In `_headers`.
+
+ex) Lovable (and most React.Js) at `public/` directory, Create a file called `_headers` with content: 
+``` 
+/.well-known/ai-attribution.txt
+  Content-Type: text/plain; charset=utf-8
+  Access-Control-Allow-Origin: *
+```
+
+If your site is a static site (plain HTML):
+Upload the file to your web root at exactly the path 
+
+.well-known/ai-attribution.txt. 
+
+Your web server must serve .well-known/ directories — most do by default. 
+
+If Apache blocks dotfiles, add to .htaccess:
+
+<Files "ai-attribution.txt">
+  Allow from all
+</Files>
 
 ### 3. Set the Referrer-Policy header
 
@@ -139,6 +196,18 @@ Even without a server, you can set `Referrer-Policy: origin` at the CDN level:
 ```
 Referrer-Policy: origin
 ```
+
+or the full file in `_headers` will be: 
+``` 
+/*
+  Referrer-Policy: origin
+
+/.well-known/ai-attribution.txt
+  Content-Type: text/plain; charset=utf-8
+  Access-Control-Allow-Origin: *
+
+```
+
 
 **Vercel:** In `vercel.json`:
 ```json
@@ -152,10 +221,13 @@ Referrer-Policy: origin
 }
 ```
 
+
+
+
 ### 4. Validate your deployment
 
 ```bash
-npx ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com
 ```
 
 ---

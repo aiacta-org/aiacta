@@ -130,9 +130,9 @@ EOF
 **Step 2 — Validate it**
 
 ```bash
-npx ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com
 # or from a local file:
-npx ai-attribution-lint ./path/to/ai-attribution.txt --strict
+npx @aiacta-org/ai-attribution-lint ./path/to/ai-attribution.txt --strict
 ```
 
 **Step 3 — Receive citation webhooks**

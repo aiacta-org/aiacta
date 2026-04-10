@@ -216,7 +216,7 @@ distribution multipliers at Tier Platinum.
 
 ```bash
 # Validate your ai-attribution.txt parsing
-npx ai-attribution-lint https://your-domain.com
+npx @aiacta-org/ai-attribution-lint https://your-domain.com
 
 # Test referrer headers in browser DevTools:
 # Open DevTools → Network tab → Click a link → Inspect Referer header
