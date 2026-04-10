@@ -227,7 +227,7 @@ or the full file in `_headers` will be:
 ### 4. Validate your deployment
 
 ```bash
-npx @aiacta-org/ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json
 ```
 
 ---

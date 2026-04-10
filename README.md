@@ -130,7 +130,7 @@ EOF
 **Step 2 — Validate it**
 
 ```bash
-npx @aiacta-org/ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json
 # or from a local file:
 npx @aiacta-org/ai-attribution-lint ./path/to/ai-attribution.txt --strict
 ```

@@ -59,14 +59,14 @@ app.use((req, res, next) => {
 // This file tells AI crawlers your preferences: what they may use your content
 // for, how to cite you, whether to notify you of citations, etc.
 // Place this at /.well-known/ai-attribution.txt on your domain.
-// Validate with: npx @aiacta-org/ai-attribution-lint https://yourdomain.com
+// Validate with: npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json
 app.get('/.well-known/ai-attribution.txt', (req, res) => {
   // The format is plain text: Field-Name: value
   // One field per line. Comments start with #.
   const content = [
     '# ai-attribution.txt — AIACTA Publisher Preferences',
     '# Spec: https://aiacta.org/spec/v1.0',
-    '# Validate: npx @aiacta-org/ai-attribution-lint https://yourdomain.com',
+    '# Validate: npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json',
     '',
     'Schema-Version: 1.0',
     '',

@@ -59,7 +59,7 @@ jobs:
           days-before-issue-close: 14
 
           stale-issue-label: 'stale'
-          close-issue-reason: 'not planned'
+          close-issue-reason: 'not_planned'
 
           stale-issue-message: |
             This issue has been inactive for **60 days** and has been marked as stale.
@@ -72,7 +72,7 @@ jobs:
             If no activity occurs in the next **14 days**, this issue will be
             closed automatically. You can **reopen it at any time** if needed.
 
-            Thank you for contributing to AIACTA! 🙏
+            Thank you for contributing to AIACTA!
 
           close-issue-message: |
             This issue was automatically closed due to **14 days of inactivity**
@@ -90,8 +90,6 @@ jobs:
           days-before-pr-close: 14
 
           stale-pr-label: 'stale'
-          close-pr-reason: 'not planned'
-
           stale-pr-message: |
             This pull request has been inactive for **30 days** and has been
             marked as stale.

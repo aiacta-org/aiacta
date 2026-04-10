@@ -21,7 +21,7 @@ Think of it as the `eslint` for the AIACTA standard.
 
 ```bash
 # Run once without installing (recommended for quick checks)
-npx @aiacta-org/ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json
 
 # Install globally
 npm install -g @aiacta-org/ai-attribution-lint
@@ -37,7 +37,7 @@ npm install --save-dev @aiacta-org/ai-attribution-lint
 ### Check a live website
 
 ```bash
-npx @aiacta-org/ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json
 ```
 
 The linter automatically fetches `/.well-known/ai-attribution.txt` (and falls back to `/ai-attribution.txt`).

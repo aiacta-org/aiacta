@@ -23,7 +23,7 @@ Content-License: CC-BY-SA-4.0
 ### 2. Validate it
 
 ```bash
-npx @aiacta-org/ai-attribution-lint https://yourdomain.com
+npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json
 ```
 
 > You must install first, type 'y' + enter.

@@ -2,7 +2,7 @@
 # Place at: https://yourdomain.com/.well-known/ai-attribution.txt
 # Format: https://aiacta.org/spec/v1.0
 #
-# Validate with: npx @aiacta-org/ai-attribution-lint https://yourdomain.com
+# Validate with: npx @aiacta-org/ai-attribution-lint https://yourdomain.com --json
 
 Schema-Version: 1.0
 
