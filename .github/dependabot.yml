@@ -14,7 +14,7 @@ updates:
         patterns:
           - "*"
 
-  # 2. Keep Node.js dependencies updated (IPFS, Arweave, Turbo SDK)
+  # 2. Keep Node.js dependencies updated
   - package-ecosystem: "npm"
     directory: "/"
     schedule:

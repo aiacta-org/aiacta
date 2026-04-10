@@ -93,8 +93,19 @@ app.post('/canary/probe', (req, res) => {
   }
 });
 
-/** Audit log — for AAC governance review. */
+/** Audit log — for AAC governance review.
+ * Protected: requires X-AIACTA-Audit-Key header matching AUDIT_LOG_API_KEY env var.
+ */
 app.get('/canary/audit-log', (req, res) => {
+  const auditKey = process.env.AUDIT_LOG_API_KEY;
+  if (!auditKey) {
+    // If no key is configured, deny all access — fail secure
+    return res.status(503).json({ error: 'Audit log access not configured. Set AUDIT_LOG_API_KEY.' });
+  }
+  const provided = req.headers['x-aiacta-audit-key'];
+  if (!provided || provided !== auditKey) {
+    return res.status(401).json({ error: 'Audit log access restricted to AAC governance team.' });
+  }
   res.json({ crawl_log: crawlLog.slice(-500), violations, total_crawl_events: crawlLog.length });
 });
 

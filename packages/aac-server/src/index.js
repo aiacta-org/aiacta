@@ -25,7 +25,8 @@ app.use('/v1/citations',    citationRoutes);
 app.use('/v1/distribution', distributionRoutes);
 app.use('/v1/provenance',   provenanceRoutes);
 
-app.get('/health', (_, res) => res.json({ status: 'ok', version: '1.0.0', spec: 'AIACTA/1.0' }));
+const PKG_VERSION = require('../package.json').version;
+app.get('/health', (_, res) => res.json({ status: 'ok', version: PKG_VERSION, spec: 'AIACTA/1.0' }));
 
 // ── 404 handler ───────────────────────────────────────────────────────────
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
