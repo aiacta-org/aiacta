@@ -42,7 +42,7 @@
     "node-cache": "^5.1.0"
   },
   "devDependencies": {
-    "jest": "^29.0.0",
+    "jest": "^30.3.0",
     "nock": "^14.0.11"
   }
 }
