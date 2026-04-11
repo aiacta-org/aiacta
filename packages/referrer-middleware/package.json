@@ -3,6 +3,7 @@
   "version": "1.0.7",
   "description": "Express and WSGI middleware that enforces AIACTA Proposal 3 referrer-policy standards for AI platform outbound links, and optionally appends UTM parameters (§4.2–4.4)",
   "author": "Eric Michel",
+  "license": "Apache-2.0",
   "main": "src/node/index.js",
   "scripts": {
     "test": "jest --forceExit"

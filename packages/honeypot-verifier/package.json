@@ -3,6 +3,7 @@
   "version": "1.0.7",
   "description": "Honeypot verification node server for auditing X-AI-Crawl-Purpose header accuracy (AIACTA §2.4.1). Maintains unique URLs with detectable metadata; cross-checks claimed crawl purpose against observed model weight inclusion.",
   "author": "Eric Michel",
+  "license": "Apache-2.0",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

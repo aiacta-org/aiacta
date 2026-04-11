@@ -64,5 +64,6 @@ jobs:
             BSD-3-Clause,
             ISC,
             0BSD,
-            Unlicense
+            Unlicense,
+            CC0-1.0
             

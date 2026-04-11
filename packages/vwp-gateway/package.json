@@ -3,6 +3,7 @@
   "version": "1.0.7",
   "description": "Verifiable Webhook Protocol (VWP) gateway — Proof-of-Inference validation, anti-Sybil throttling, and fraud pattern detection (§3.4A-D)",
   "author": "Eric Michel",
+  "license": "Apache-2.0",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

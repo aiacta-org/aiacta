@@ -3,6 +3,7 @@
   "version": "1.0.7",
   "description": "Docker sandbox for testing all AIACTA Proposals 1–4 against a simulated publisher ecosystem (§12.1)",
   "author": "Eric Michel",
+  "license": "Apache-2.0",
   "scripts": {
     "up": "docker compose up --build",
     "down": "docker compose down",
