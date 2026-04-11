@@ -2,10 +2,18 @@
  * AAC Server route tests.
  * better-sqlite3 uses an in-memory DB (:memory:) during tests via AAC_DB_PATH env.
  */
-process.env.AAC_DB_PATH = ':memory:';
+process.env.AAC_DB_PATH        = ':memory:';
 process.env.PROVENANCE_API_KEY = 'test-provenance-key';
+// Set the API key so the requireApiKey middleware passes in tests.
+// Without this every POST to enrollment and distribution/commit returns 503.
+process.env.AAC_API_KEY        = 'test-api-key';
 const request = require('supertest');
 const { app, initDb } = require('../src/index');
+
+// Helper: attach the API key header to any request that needs it
+function withApiKey(req) {
+  return req.set('X-AAC-API-Key', process.env.AAC_API_KEY);
+}
 
 beforeAll(() => { initDb(); });
 
@@ -20,8 +28,8 @@ describe('Health', () => {
 
 describe('Enrollment — providers', () => {
   test('creates a provider with PCF contribution mode', async () => {
-    const res = await request(app)
-      .post('/v1/enrollment/providers')
+    const res = await withApiKey(request(app)
+      .post('/v1/enrollment/providers'))
       .send({ name: 'Test Provider', contribution_mode: 'pcf', pcf_rate: 0.001 });
     expect([200, 201]).toContain(res.status);
     expect(res.body.provider_id).toBeDefined();
@@ -29,22 +37,22 @@ describe('Enrollment — providers', () => {
   });
 
   test('creates a provider with RPA contribution mode', async () => {
-    const res = await request(app)
-      .post('/v1/enrollment/providers')
+    const res = await withApiKey(request(app)
+      .post('/v1/enrollment/providers'))
       .send({ name: 'RPA Provider', contribution_mode: 'rpa', rpa_rate: 0.01 });
     expect([200, 201]).toContain(res.status);
   });
 
   test('rejects invalid contribution_mode', async () => {
-    const res = await request(app)
-      .post('/v1/enrollment/providers')
+    const res = await withApiKey(request(app)
+      .post('/v1/enrollment/providers'))
       .send({ name: 'Bad', contribution_mode: 'invalid' });
     expect(res.status).toBe(400);
   });
 
   test('requires name field', async () => {
-    const res = await request(app)
-      .post('/v1/enrollment/providers')
+    const res = await withApiKey(request(app)
+      .post('/v1/enrollment/providers'))
       .send({ contribution_mode: 'pcf' });
     expect(res.status).toBe(400);
   });
@@ -52,8 +60,8 @@ describe('Enrollment — providers', () => {
 
 describe('Enrollment — publishers', () => {
   test('creates a publisher', async () => {
-    const res = await request(app)
-      .post('/v1/enrollment/publishers')
+    const res = await withApiKey(request(app)
+      .post('/v1/enrollment/publishers'))
       .send({ domain: 'test-pub.com', reward_tier: 'standard', content_license: 'CC-BY-SA-4.0' });
     expect([200, 201]).toContain(res.status);
     expect(res.body.publisher_id).toBeDefined();
@@ -117,8 +125,8 @@ describe('Citations', () => {
   });
 
   test('pull API applies since filtering', async () => {
-    await request(app)
-      .post('/v1/enrollment/publishers')
+    await withApiKey(request(app)
+      .post('/v1/enrollment/publishers'))
       .send({ domain: 'since-filter.com', reward_tier: 'standard' });
 
     const oldEvent = {
@@ -218,5 +226,15 @@ describe('Provenance', () => {
     expect(res.body.count).toBe(1);
     expect(res.body.audit_trail[0].id).toBeDefined();
     expect(res.body.audit_trail[0].idempotency_key).toBe('audit_lookup_key_001');
+  });
+});
+
+describe('Auth middleware', () => {
+  test('enrollment requires X-AAC-API-Key header', async () => {
+    const res = await request(app)
+      .post('/v1/enrollment/providers')
+      .send({ name: 'Unauthed', contribution_mode: 'pcf', pcf_rate: 0.001 });
+    // Without the header the middleware should return 401 (key set) or 503 (key not set)
+    expect([401, 503]).toContain(res.status);
   });
 });

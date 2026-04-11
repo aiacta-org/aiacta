@@ -15,7 +15,17 @@ const crypto = require('crypto');
 const axios  = require('axios');
 const { URL } = require('url');
 
-const AAC_SIGNING_SECRET  = process.env.AAC_SIGNING_SECRET || 'aac-dev-secret-change-in-prod';
+// Fail closed in production — no fallback to a known dev default.
+// Anyone who knows 'aac-dev-secret-change-in-prod' could forge AAC-signed webhooks.
+if (process.env.NODE_ENV === 'production' &&
+    (!process.env.AAC_SIGNING_SECRET ||
+     process.env.AAC_SIGNING_SECRET === 'aac-dev-secret-change-in-prod')) {
+  throw new Error(
+    '[vwp-gateway] FATAL: AAC_SIGNING_SECRET is not configured or uses the dev default. ' +
+    'Set a real secret before starting in production.'
+  );
+}
+const AAC_SIGNING_SECRET = process.env.AAC_SIGNING_SECRET || 'aac-dev-secret-change-in-prod';
 const PUBLISHER_TIMEOUT_MS = 10_000; // §3.5
 
 // Private/reserved IP ranges that must never receive forwarded webhooks
