@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.10](https://github.com/aiacta-org/aiacta/compare/v1.0.9...v1.0.10) (2026-04-11)
+
+
+### Bug Fixes
+
+* **webhook:** provenance SQL columns, INSERT OR IGNORE transparency, auth middleware, gateway webhook resolution, fail-closed signing keys ([#76](https://github.com/aiacta-org/aiacta/issues/76)) ([62b252a](https://github.com/aiacta-org/aiacta/commit/62b252ab9bf503ac80a8f4d59d09a4651bd0b80a))
+
 ## [1.0.9](https://github.com/aiacta-org/aiacta/compare/v1.0.8...v1.0.9) (2026-04-11)
 
 
