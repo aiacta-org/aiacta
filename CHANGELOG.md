@@ -8,6 +8,15 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.8](https://github.com/aiacta-org/aiacta/compare/v1.0.7...v1.0.8) (2026-04-11)
+
+
+### Bug Fixes
+
+* **ct:** replace HTTP_CODE grep separator with separate curl calls to fix exit code 2 ([#60](https://github.com/aiacta-org/aiacta/issues/60)) ([fae570e](https://github.com/aiacta-org/aiacta/commit/fae570e196952977beaf325ce2f4175c1791d796))
+* **query:** provenance and cleaner citation routes ([#64](https://github.com/aiacta-org/aiacta/issues/64)) ([43c5e41](https://github.com/aiacta-org/aiacta/commit/43c5e418359c7790a0a5c036473904dd630db27d))
+* **stale:** not_planned instead of 'non planned' ([#62](https://github.com/aiacta-org/aiacta/issues/62)) ([00f2505](https://github.com/aiacta-org/aiacta/commit/00f25053fec1bfc44e70ff5f9d339f48308f6c23))
+
 ## [1.0.7](https://github.com/aiacta-org/aiacta/compare/v1.0.6...v1.0.7) (2026-04-09)
 
 
