@@ -16,13 +16,45 @@ const crypto = require('crypto');
 const TIMESTAMP_TOLERANCE_SECONDS = 300; // §3.4A
 
 // ── Key store ─────────────────────────────────────────────────────────────
-// In production: fetch from a KMS or secure DB keyed by providerId.
-// Keys are set via environment variables or populated at enrollment.
-const PROVIDER_HMAC_KEYS = {
-  'anthropic': process.env.SIGNING_KEY_ANTHROPIC || 'dev-hmac-key-anthropic',
-  'openai':    process.env.SIGNING_KEY_OPENAI    || 'dev-hmac-key-openai',
-  'google':    process.env.SIGNING_KEY_GOOGLE    || 'dev-hmac-key-google',
-};
+// Keys are loaded from environment variables only.
+//
+// FIX: Previous version fell back to hardcoded dev defaults when env vars were
+// missing. This means anyone who knows the repo's default strings could forge
+// valid provider signatures in production. Now we fail closed:
+//   - If an env var is set to the default dev value, we reject at startup.
+//   - If no key is configured for a provider, we return false (not throw).
+//
+// In production, fetch keys from a KMS. The env vars are the minimum viable
+// configuration for a single-server reference deployment.
+
+const DEV_DEFAULT_KEYS = new Set([
+  'dev-hmac-key-anthropic',
+  'dev-hmac-key-openai',
+  'dev-hmac-key-google',
+]);
+
+// Validate at module load time — fails the process before accepting any traffic
+if (process.env.NODE_ENV === 'production') {
+  for (const [envVar, devDefault] of [
+    ['SIGNING_KEY_ANTHROPIC', 'dev-hmac-key-anthropic'],
+    ['SIGNING_KEY_OPENAI',    'dev-hmac-key-openai'],
+    ['SIGNING_KEY_GOOGLE',    'dev-hmac-key-google'],
+  ]) {
+    const val = process.env[envVar];
+    if (val === devDefault || val === undefined) {
+      throw new Error(
+        `[vwp-gateway] FATAL: ${envVar} is not configured or uses the dev default. ` +
+        `Set real signing keys before starting in production.`
+      );
+    }
+  }
+}
+
+// Only load keys that are explicitly configured — no fallback to dev defaults
+const PROVIDER_HMAC_KEYS = {};
+if (process.env.SIGNING_KEY_ANTHROPIC) PROVIDER_HMAC_KEYS['anthropic'] = process.env.SIGNING_KEY_ANTHROPIC;
+if (process.env.SIGNING_KEY_OPENAI)    PROVIDER_HMAC_KEYS['openai']    = process.env.SIGNING_KEY_OPENAI;
+if (process.env.SIGNING_KEY_GOOGLE)    PROVIDER_HMAC_KEYS['google']    = process.env.SIGNING_KEY_GOOGLE;
 
 // Ed25519 public keys (PEM or hex) — populated at enrollment
 const PROVIDER_ED25519_PUBKEYS = {

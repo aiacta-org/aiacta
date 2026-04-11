@@ -9,7 +9,8 @@ const enrollmentRoutes   = require('./routes/enrollment');
 const citationRoutes     = require('./routes/citations');
 const distributionRoutes = require('./routes/distribution');
 const provenanceRoutes   = require('./routes/provenance');
-const { initDb }         = require('./db/database');
+const { initDb, getDb }  = require('./db/database');
+const { requireApiKey, requireInternalKey } = require('./middleware/apiKey');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -20,10 +21,38 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/v1/enrollment',   enrollmentRoutes);
+// Mutating enrollment routes require API key auth
+// (publishers and AI providers register here — must be authorised)
+app.use('/v1/enrollment',   requireApiKey, enrollmentRoutes);
+
+// Citation ingestion is authenticated at the gateway level (provider signature)
+// Summary and pull are read-only and scoped to the caller's domain
 app.use('/v1/citations',    citationRoutes);
+
+// Distribution commit writes financial records — requires API key
+// Distribution calculate (preview) is read-only, no auth needed
+app.post('/v1/distribution/commit',    requireApiKey, (req, res, next) => next());
 app.use('/v1/distribution', distributionRoutes);
+
 app.use('/v1/provenance',   provenanceRoutes);
+
+// ── Internal gateway endpoint ─────────────────────────────────────────────
+// Used by vwp-gateway to resolve a publisher's registered webhook URL.
+// Protected by a separate internal key to isolate from the public API.
+app.get('/internal/publishers/:domain/webhook', requireInternalKey, (req, res) => {
+  const domain    = req.params.domain.toLowerCase();
+  const publisher = getDb()
+    .prepare('SELECT webhook_url, status FROM publishers WHERE domain = ?')
+    .get(domain);
+
+  if (!publisher) {
+    return res.status(404).json({ error: 'Publisher not found', webhook_url: null });
+  }
+  if (publisher.status !== 'verified') {
+    return res.status(403).json({ error: 'Publisher not yet verified', webhook_url: null });
+  }
+  res.json({ domain, webhook_url: publisher.webhook_url ?? null });
+});
 
 const PKG_VERSION = require('../package.json').version;
 app.get('/health', (_, res) => res.json({ status: 'ok', version: PKG_VERSION, spec: 'AIACTA/1.0' }));

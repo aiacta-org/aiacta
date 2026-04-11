@@ -11,12 +11,23 @@
 'use strict';
 const { getDb } = require('../db/database');
 
+// Keys are full SPDX identifiers — must match what publishers write in
+// Content-License: and what the linter validates against spdx-license-ids.
+// Short forms like 'CC-BY' are NOT valid SPDX — they would never match and
+// silently fall through to the default 1.0 multiplier, breaking payouts.
 const LICENSE_MULTIPLIERS = {
-  'All-Rights-Reserved': 1.0,
-  'CC-BY-ND':            0.8,
-  'CC-BY-SA':            0.7,
-  'CC-BY':               0.5,
-  'CC0':                 0.0,
+  'All-Rights-Reserved': 1.0,   // highest — all rights reserved
+  'CC-BY-ND-4.0':        0.8,   // no derivatives
+  'CC-BY-ND-3.0':        0.8,
+  'CC-BY-SA-4.0':        0.7,   // share-alike
+  'CC-BY-SA-3.0':        0.7,
+  'CC-BY-4.0':           0.5,   // attribution only
+  'CC-BY-3.0':           0.5,
+  'CC-BY-NC-4.0':        0.6,   // non-commercial
+  'CC-BY-NC-3.0':        0.6,
+  'Apache-2.0':          0.4,   // permissive open source
+  'MIT':                 0.3,
+  'CC0-1.0':             0.0,   // public domain — no distribution due
 };
 
 const QUERY_VALUE_WEIGHTS = {

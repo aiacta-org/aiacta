@@ -11,6 +11,7 @@
  */
 'use strict';
 const express   = require('express');
+const axios     = require('axios');
 const { verifyProviderSignature } = require('./verify-provider-signature');
 const { checkPoI }                = require('./proof-of-inference');
 const { checkVelocityGateway }    = require('./velocity-throttle');
@@ -19,11 +20,32 @@ const { forwardWebhook }          = require('./webhook-forwarder');
 const app = express();
 app.use(express.raw({ type: 'application/json' }));
 
+const AAC_SERVER_URL   = process.env.AAC_SERVER_URL || 'http://localhost:3100';
+const AAC_INTERNAL_KEY = process.env.AAC_INTERNAL_KEY || '';
+
 function resolvePublisherWebhookUrl(event) {
   return event._publisher_webhook_url
     || event.publisher_webhook_url
     || event.publisher?.webhook_url
     || null;
+}
+
+async function resolvePublisherWebhook(domain) {
+  if (!domain) return null;
+
+  try {
+    const res = await axios.get(
+      `${AAC_SERVER_URL}/internal/publishers/${encodeURIComponent(domain)}/webhook`,
+      {
+        headers: AAC_INTERNAL_KEY ? { 'X-AAC-Internal-Key': AAC_INTERNAL_KEY } : {},
+        timeout: 3_000,
+      }
+    );
+    return res.data?.webhook_url ?? null;
+  } catch (err) {
+    console.warn(`[vwp-gateway] Could not resolve webhook for ${domain}: ${err.message}`);
+    return null;
+  }
 }
 
 app.post('/gateway/dispatch', async (req, res) => {
@@ -53,15 +75,21 @@ app.post('/gateway/dispatch', async (req, res) => {
     }
   }
 
-  const publisherWebhookUrl = resolvePublisherWebhookUrl(event);
-  if (!event._hold && !publisherWebhookUrl) {
-    return res.status(422).json({ error: 'Publisher webhook destination missing' });
+  let publisherWebhookUrl = resolvePublisherWebhookUrl(event);
+  if (!event._hold && !publisherWebhookUrl && domain) {
+    publisherWebhookUrl = await resolvePublisherWebhook(domain);
   }
 
   // Step 4: Forward to publisher (async)
   if (publisherWebhookUrl) {
     event._publisher_webhook_url = publisherWebhookUrl;
+  } else if (!event._hold) {
+    event._hold = true;
+    event._hold_reason = domain
+      ? `No webhook URL registered for publisher domain: ${domain}`
+      : 'Publisher webhook destination missing';
   }
+
   res.status(202).json({ status: event._hold ? 'hold' : 'dispatched', hold_reason: event._hold_reason });
   if (!event._hold) {
     forwardWebhook(event, providerId).catch(err =>
