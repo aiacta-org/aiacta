@@ -350,7 +350,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-      - run: npm ci -g ajv-cli ajv-formats
+      - run: npm install -g ajv-cli ajv-formats
       - name: Check schemas are valid JSON
         run: |
           for f in shared/schemas/*.json; do
