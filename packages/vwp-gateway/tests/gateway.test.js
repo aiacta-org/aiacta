@@ -1,3 +1,13 @@
+// IMPORTANT: set env vars BEFORE requiring any modules.
+// verify-provider-signature.js reads process.env.SIGNING_KEY_* at module-load
+// time to populate PROVIDER_HMAC_KEYS. If the var is not set before require(),
+// the key store will be empty and every signature check returns false (401).
+
+const TEST_SIGNING_SECRET = 'test-signing-secret-gateway';
+process.env.SIGNING_KEY_ANTHROPIC = TEST_SIGNING_SECRET;
+
+process.env.AAC_SIGNING_SECRET    = 'test-aac-signing-secret';
+
 jest.mock('axios', () => ({
   get: jest.fn(),
 }));
@@ -49,7 +59,7 @@ test('POST /gateway/dispatch holds events when no publisher destination can be r
     .set('Content-Type', 'application/json')
     .set('X-AIACTA-Provider', 'anthropic')
     .set('X-AIACTA-Timestamp', ts)
-    .set('X-AIACTA-Signature', sign(body, ts, process.env.SIGNING_KEY_ANTHROPIC || 'dev-hmac-key-anthropic'))
+    .set('X-AIACTA-Signature', sign(body, ts, TEST_SIGNING_SECRET))
     .send(body);
 
   expect(res.status).toBe(202);
@@ -74,7 +84,7 @@ test('POST /gateway/dispatch resolves publisher webhook from AAC server before f
     .set('Content-Type', 'application/json')
     .set('X-AIACTA-Provider', 'anthropic')
     .set('X-AIACTA-Timestamp', ts)
-    .set('X-AIACTA-Signature', sign(body, ts, process.env.SIGNING_KEY_ANTHROPIC || 'dev-hmac-key-anthropic'))
+    .set('X-AIACTA-Signature', sign(body, ts, TEST_SIGNING_SECRET))
     .send(body);
 
   expect(res.status).toBe(202);
