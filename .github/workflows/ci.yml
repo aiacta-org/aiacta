@@ -41,8 +41,8 @@ jobs:
       dashboard: ${{ steps.filter.outputs.dashboard }}
       schemas:   ${{ steps.filter.outputs.schemas }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -92,11 +92,11 @@ jobs:
             db_path: ':memory:'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
 
@@ -115,7 +115,7 @@ jobs:
 
       - name: Upload coverage report
         if: matrix.node == '20.x' && matrix.package == 'aac-server'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: packages/aac-server/coverage
@@ -136,9 +136,9 @@ jobs:
         go: ['1.21', '1.22']
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
           cache-dependency-path: packages/ai-citation-sdk/src/go/go.mod
@@ -189,9 +189,9 @@ jobs:
             test_file: packages/crawl-manifest-client/tests/python_client.test.py
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           cache: 'pip'
@@ -222,8 +222,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -265,8 +265,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -280,7 +280,7 @@ jobs:
           NODE_ENV: production
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dashboard-dist-${{ github.sha }}
           path: packages/aac-dashboard-lite/dist/
@@ -294,8 +294,8 @@ jobs:
     name: npm security audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
       - run: npm install
@@ -303,7 +303,7 @@ jobs:
         run: npm audit --audit-level=high
       - name: Audit — full report (informational)
         run: npm audit --json > npm-audit-report.json || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: npm-audit-report
           path: npm-audit-report.json
@@ -318,7 +318,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Extract and check spec references
         run: |
           REFS=$(grep -rh "§[0-9][0-9.]*[A-D]*" packages/ shared/ \
@@ -346,8 +346,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20.x'
       - run: npm install -g ajv-cli ajv-formats
