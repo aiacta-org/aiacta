@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.9](https://github.com/aiacta-org/aiacta/compare/v1.0.8...v1.0.9) (2026-04-11)
+
+
+### Bug Fixes
+
+* **ci:** changed from npm install to npm ci for faster workflow ([#74](https://github.com/aiacta-org/aiacta/issues/74)) ([c1e539f](https://github.com/aiacta-org/aiacta/commit/c1e539f03b50b44d4f33ba0c643e87b7e1b5297e))
+
 ## [1.0.8](https://github.com/aiacta-org/aiacta/compare/v1.0.7...v1.0.8) (2026-04-11)
 
 
