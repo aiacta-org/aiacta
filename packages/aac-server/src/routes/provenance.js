@@ -28,18 +28,22 @@ router.use((req, res, next) => {
 /**
  * POST /v1/provenance/query
  * Body: { poi_token: string, from?: string, to?: string }
+ *
+ * We currently support exact-match lookups against stored identifiers.
+ * A dedicated poi_token column would be a better long-term design than
+ * relying on idempotency_key/id matching semantics.
  */
 router.post('/query', (req, res) => {
   const { poi_token, from, to } = req.body;
   if (!poi_token) return res.status(400).json({ error: 'poi_token required' });
   const rows = getDb().prepare(`
-    SELECT event_id, provider_id, cited_url, citation_type, query_category, model, event_timestamp
+    SELECT id, idempotency_key, provider_id, cited_url, citation_type, query_category, model, event_timestamp
     FROM citation_events
-    WHERE idempotency_key LIKE ?
+    WHERE (idempotency_key = ? OR id = ?)
       AND (? IS NULL OR event_timestamp >= ?)
       AND (? IS NULL OR event_timestamp <= ?)
     LIMIT 500
-  `).all(`%${poi_token}%`, from ?? null, from ?? null, to ?? null, to ?? null);
+  `).all(poi_token, poi_token, from ?? null, from ?? null, to ?? null, to ?? null);
   res.json({ poi_token, matched_events: rows, count: rows.length });
 });
 
@@ -54,7 +58,7 @@ router.post('/query', (req, res) => {
 router.get('/audit-trail/*url', (req, res) => {
   const url = decodeURIComponent(req.params.url);
   const rows = getDb().prepare(`
-    SELECT e.id, e.provider_id, p.name AS provider_name,
+    SELECT e.id, e.idempotency_key, e.provider_id, p.name AS provider_name,
            e.cited_url, e.citation_type, e.query_category,
            e.model, e.event_timestamp
     FROM citation_events e

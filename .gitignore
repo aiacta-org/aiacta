@@ -151,3 +151,7 @@ vite.config.ts.timestamp-*
 
 .js.*
 *.egg-info
+
+output/
+tmp/
+

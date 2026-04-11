@@ -24,3 +24,17 @@ test('old timestamp throws', () => {
   const oldTs = String(Math.floor(Date.now() / 1000) - 400);
   expect(() => verifyWebhookSignature('{}', oldTs, 'sha256=abc', 'secret')).toThrow();
 });
+
+test('missing signature header returns false', () => {
+  const ts = String(Math.floor(Date.now() / 1000));
+  expect(verifyWebhookSignature('{}', ts, undefined, 'secret')).toBe(false);
+});
+
+test('malformed signature header returns false', () => {
+  const ts = String(Math.floor(Date.now() / 1000));
+  expect(verifyWebhookSignature('{}', ts, 'sha256=not-hex', 'secret')).toBe(false);
+});
+
+test('non-numeric timestamp returns false', () => {
+  expect(verifyWebhookSignature('{}', 'not-a-timestamp', 'sha256=abc', 'secret')).toBe(false);
+});

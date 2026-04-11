@@ -20,3 +20,22 @@ test('POST /gateway/dispatch rejects missing signature', async () => {
     .send('{"event_type":"citation.generated"}');
   expect([401, 400]).toContain(res.status);
 });
+
+test('POST /gateway/dispatch rejects events without a publisher destination', async () => {
+  const body = JSON.stringify({
+    event_type: 'citation.generated',
+    citation: { url: 'https://example.com/article' },
+  });
+  const ts = String(Math.floor(Date.now() / 1000));
+
+  const res = await request(app)
+    .post('/gateway/dispatch')
+    .set('Content-Type', 'application/json')
+    .set('X-AIACTA-Provider', 'anthropic')
+    .set('X-AIACTA-Timestamp', ts)
+    .set('X-AIACTA-Signature', sign(body, ts, process.env.SIGNING_KEY_ANTHROPIC || 'dev-hmac-key-anthropic'))
+    .send(body);
+
+  expect(res.status).toBe(422);
+  expect(res.body.error).toMatch(/destination missing/i);
+});

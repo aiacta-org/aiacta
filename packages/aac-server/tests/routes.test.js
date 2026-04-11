@@ -3,6 +3,7 @@
  * better-sqlite3 uses an in-memory DB (:memory:) during tests via AAC_DB_PATH env.
  */
 process.env.AAC_DB_PATH = ':memory:';
+process.env.PROVENANCE_API_KEY = 'test-provenance-key';
 const request = require('supertest');
 const { app, initDb } = require('../src/index');
 
@@ -74,10 +75,148 @@ describe('Citations', () => {
     };
     const res = await request(app).post('/v1/citations/ingest').send(event);
     expect([200, 202]).toContain(res.status);
+    expect(res.body.accepted).toBe(1);
+    expect(res.body.duplicates).toBe(0);
+    expect(res.body.total_received).toBe(1);
   });
 
   test('returns 400 if from/to missing in summary', async () => {
     const res = await request(app).get('/v1/citations/summary');
     expect(res.status).toBe(400);
+  });
+
+  test('reports duplicate ingests honestly', async () => {
+    const event = {
+      schema_version: '1.0',
+      provider: 'test-provider',
+      event_type: 'citation.generated',
+      event_id: 'evt_duplicate_001',
+      idempotency_key: 'idem_duplicate_001',
+      timestamp: '2026-03-24T09:14:00Z',
+      citation: {
+        url: 'https://test-pub.com/duplicate',
+        citation_type: 'factual_source',
+        query_category_l1: 'technology',
+      },
+    };
+
+    const first = await request(app).post('/v1/citations/ingest').send(event);
+    const second = await request(app).post('/v1/citations/ingest').send(event);
+
+    expect(first.status).toBe(202);
+    expect(first.body.accepted).toBe(1);
+    expect(first.body.duplicates).toBe(0);
+    expect(first.body.total_received).toBe(1);
+    expect(first.body.classifications[0].status).toBe('inserted');
+
+    expect(second.status).toBe(202);
+    expect(second.body.accepted).toBe(0);
+    expect(second.body.duplicates).toBe(1);
+    expect(second.body.total_received).toBe(1);
+    expect(second.body.classifications[0].status).toBe('duplicate');
+  });
+
+  test('pull API applies since filtering', async () => {
+    await request(app)
+      .post('/v1/enrollment/publishers')
+      .send({ domain: 'since-filter.com', reward_tier: 'standard' });
+
+    const oldEvent = {
+      schema_version: '1.0',
+      provider: 'test-provider',
+      event_type: 'citation.generated',
+      event_id: 'evt_since_old',
+      idempotency_key: 'idem_since_old',
+      timestamp: '2026-03-10T00:00:00Z',
+      citation: {
+        url: 'https://since-filter.com/old',
+        citation_type: 'factual_source',
+        query_category_l1: 'technology',
+      },
+    };
+    const newEvent = {
+      schema_version: '1.0',
+      provider: 'test-provider',
+      event_type: 'citation.generated',
+      event_id: 'evt_since_new',
+      idempotency_key: 'idem_since_new',
+      timestamp: '2026-03-25T00:00:00Z',
+      citation: {
+        url: 'https://since-filter.com/new',
+        citation_type: 'factual_source',
+        query_category_l1: 'technology',
+      },
+    };
+
+    await request(app).post('/v1/citations/ingest').send(oldEvent);
+    await request(app).post('/v1/citations/ingest').send(newEvent);
+
+    const res = await request(app)
+      .get('/v1/citations/pull')
+      .query({ domain: 'since-filter.com', since: '2026-03-20T00:00:00Z' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(1);
+    expect(res.body.events[0].idempotency_key).toBe('idem_since_new');
+  });
+});
+
+describe('Provenance', () => {
+  test('query returns stored event rows using valid schema columns', async () => {
+    const event = {
+      schema_version: '1.0',
+      provider: 'test-provider',
+      event_type: 'citation.generated',
+      event_id: 'evt_prov_001',
+      idempotency_key: 'poi_lookup_key_001',
+      timestamp: '2026-03-26T09:14:00Z',
+      citation: {
+        url: 'https://test-pub.com/provenance',
+        citation_type: 'factual_source',
+        query_category_l1: 'technology',
+        model: 'test-model',
+      },
+    };
+
+    await request(app).post('/v1/citations/ingest').send(event);
+
+    const res = await request(app)
+      .post('/v1/provenance/query')
+      .set('X-AIACTA-Provenance-Key', process.env.PROVENANCE_API_KEY)
+      .send({ poi_token: 'poi_lookup_key_001' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(1);
+    expect(res.body.matched_events[0].id).toBeDefined();
+    expect(res.body.matched_events[0].idempotency_key).toBe('poi_lookup_key_001');
+  });
+
+  test('audit trail includes idempotency_key for event correlation', async () => {
+    const event = {
+      schema_version: '1.0',
+      provider: 'test-provider',
+      event_type: 'citation.generated',
+      event_id: 'evt_prov_002',
+      idempotency_key: 'audit_lookup_key_001',
+      timestamp: '2026-03-27T09:14:00Z',
+      citation: {
+        url: 'https://test-pub.com/audit-trail',
+        citation_type: 'factual_source',
+        query_category_l1: 'technology',
+        model: 'test-model',
+      },
+    };
+
+    await request(app).post('/v1/citations/ingest').send(event);
+
+    const encodedUrl = encodeURIComponent('https://test-pub.com/audit-trail');
+    const res = await request(app)
+      .get(`/v1/provenance/audit-trail/${encodedUrl}`)
+      .set('X-AIACTA-Provenance-Key', process.env.PROVENANCE_API_KEY);
+
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(1);
+    expect(res.body.audit_trail[0].id).toBeDefined();
+    expect(res.body.audit_trail[0].idempotency_key).toBe('audit_lookup_key_001');
   });
 });

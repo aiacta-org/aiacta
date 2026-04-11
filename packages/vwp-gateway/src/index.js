@@ -19,6 +19,13 @@ const { forwardWebhook }          = require('./webhook-forwarder');
 const app = express();
 app.use(express.raw({ type: 'application/json' }));
 
+function resolvePublisherWebhookUrl(event) {
+  return event._publisher_webhook_url
+    || event.publisher_webhook_url
+    || event.publisher?.webhook_url
+    || null;
+}
+
 app.post('/gateway/dispatch', async (req, res) => {
   const timestamp  = req.headers['x-aiacta-timestamp'];
   const signature  = req.headers['x-aiacta-signature'];
@@ -46,7 +53,15 @@ app.post('/gateway/dispatch', async (req, res) => {
     }
   }
 
+  const publisherWebhookUrl = resolvePublisherWebhookUrl(event);
+  if (!event._hold && !publisherWebhookUrl) {
+    return res.status(422).json({ error: 'Publisher webhook destination missing' });
+  }
+
   // Step 4: Forward to publisher (async)
+  if (publisherWebhookUrl) {
+    event._publisher_webhook_url = publisherWebhookUrl;
+  }
   res.status(202).json({ status: event._hold ? 'hold' : 'dispatched', hold_reason: event._hold_reason });
   if (!event._hold) {
     forwardWebhook(event, providerId).catch(err =>

@@ -38,6 +38,9 @@ router.post('/ingest', (req, res) => {
 
   const insertMany = db.transaction((evts) => {
     const results = [];
+    let insertedCount = 0;
+    let duplicateCount = 0;
+
     for (const e of evts) {
       const url     = e.citation?.url ?? '';
       let domain = null;
@@ -48,7 +51,7 @@ router.post('/ingest', (req, res) => {
         queryCategoryL2: e.citation?.query_category_l2,
         citationType:    e.citation?.citation_type,
       });
-      insert.run(
+      const info = insert.run(
         uuidv4(),
         e.idempotency_key,
         e.provider ?? e.provider_id ?? 'unknown',
@@ -61,14 +64,29 @@ router.post('/ingest', (req, res) => {
         e.citation?.user_country ?? null,
         e.timestamp
       );
-      results.push({ idempotency_key: e.idempotency_key, query_type: qType });
+
+      if (info.changes === 1) insertedCount++;
+      else duplicateCount++;
+
+      results.push({
+        idempotency_key: e.idempotency_key,
+        query_type: qType,
+        status: info.changes === 1 ? 'inserted' : 'duplicate',
+      });
     }
-    return results;
+    return { results, insertedCount, duplicateCount };
   });
 
   try {
-    const results = insertMany(events);
-    res.status(202).json({ accepted: events.length, classifications: results });
+    const { results, insertedCount, duplicateCount } = insertMany(events);
+    res.status(202).json({
+      accepted: insertedCount,
+      duplicates: duplicateCount,
+      total_received: events.length,
+      // Includes both inserted and duplicate events so callers can reconcile
+      // the outcome of every submitted idempotency key.
+      classifications: results,
+    });
   } catch (err) {
     console.error('[citations] ingest error:', err);
     res.status(500).json({ error: err.message });
@@ -123,10 +141,19 @@ router.get('/pull', (req, res) => {
     FROM citation_events
     WHERE publisher_id = ?
       AND received_at >= ?
+      AND (? IS NULL OR event_timestamp >= ?)
       AND (? IS NULL OR id > ?)
     ORDER BY id ASC
     LIMIT ?
-  `).all(pub.id, cutoff, cursor ?? null, cursor ?? null, pageLimit + 1);
+  `).all(
+    pub.id,
+    cutoff,
+    since ?? null,
+    since ?? null,
+    cursor ?? null,
+    cursor ?? null,
+    pageLimit + 1
+  );
 
   const hasMore = rows.length > pageLimit;
   const events  = hasMore ? rows.slice(0, pageLimit) : rows;
