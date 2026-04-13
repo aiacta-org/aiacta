@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.11](https://github.com/aiacta-org/aiacta/compare/v1.0.10...v1.0.11) (2026-04-13)
+
+
+### Bug Fixes
+
+* **headers:** standardize all custom HTTP headers to X-AIACTA- prefix ([#78](https://github.com/aiacta-org/aiacta/issues/78)) ([7646a4c](https://github.com/aiacta-org/aiacta/commit/7646a4ccf2c40c338dee75e023621cc4146f4e9f))
+
 ## [1.0.10](https://github.com/aiacta-org/aiacta/compare/v1.0.9...v1.0.10) (2026-04-11)
 
 
