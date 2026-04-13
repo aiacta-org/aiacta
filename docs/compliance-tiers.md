@@ -3,7 +3,7 @@
 | Tier | Requirements | Estimated Effort |
 |---|---|---|
 | **Bronze** | Referrer-Policy: origin on outbound links + parse ai-attribution.txt | ~1 week |
-| **Silver** | Bronze + Crawl Manifest API + X-AI-Crawl-Purpose headers | ~6–10 weeks |
+| **Silver** | Bronze + Crawl Manifest API + X-AIACTA-Crawl-Purpose headers | ~6–10 weeks |
 | **Gold** | Silver + Citation Webhook API (push or pull) | ~14–22 weeks |
 | **Platinum** | Gold + AAC participation + annual independent audit | Organisational |
 
@@ -17,7 +17,7 @@
 ## Silver
 
 - Implement `GET /crawl-manifest/v1` with pagination, rate limiting, and domain verification.
-- Send `X-AI-Crawl-Purpose` and `X-AI-Crawl-Session` headers at crawl time.
+- Send `X-AIACTA-Crawl-Purpose` and `X-AIACTA-Crawl-Session` headers at crawl time.
 - Maintain crawl logs for at least 90 days.
 
 ## Gold

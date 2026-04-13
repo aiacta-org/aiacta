@@ -15,25 +15,25 @@
  *
  * NOTE: This is a minimal first auth layer for the reference implementation.
  * Production deployments should use OAuth 2.0 client credentials or mTLS.
- * Set AAC_API_KEY env var to a strong random secret.
+ * Set AIACTA_API_KEY env var to a strong random secret.
  * Generate one: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
  */
 'use strict';
 
 function requireApiKey(req, res, next) {
-  const configuredKey = process.env.AAC_API_KEY;
+  const configuredKey = process.env.AIACTA_API_KEY;
 
   if (!configuredKey) {
     // Fail closed: if no key is configured, deny all access to protected routes
     return res.status(503).json({
-      error: 'AAC server is not configured for production use. Set AAC_API_KEY.',
+      error: 'AAC server is not configured for production use. Set AIACTA_API_KEY.',
     });
   }
 
-  const provided = req.headers['x-aac-api-key'];
+  const provided = req.headers['X-AIACTA-API-Key'];
   if (!provided || provided !== configuredKey) {
     return res.status(401).json({
-      error: 'Valid X-AAC-API-Key header required.',
+      error: 'Valid X-AIACTA-API-Key header required.',
     });
   }
 
@@ -42,16 +42,16 @@ function requireApiKey(req, res, next) {
 
 /**
  * Middleware for internal gateway-to-server calls.
- * Uses a separate AAC_INTERNAL_KEY to isolate internal traffic from external API keys.
+ * Uses a separate AIACTA_INTERNAL_KEY to isolate internal traffic from external API keys.
  */
 function requireInternalKey(req, res, next) {
-  const configuredKey = process.env.AAC_INTERNAL_KEY;
+  const configuredKey = process.env.AIACTA_INTERNAL_KEY;
 
   if (!configuredKey) {
     return res.status(503).json({ error: 'Internal key not configured.' });
   }
 
-  const provided = req.headers['x-aac-internal-key'];
+  const provided = req.headers['X-AIACTA-Internal-Key'];
   if (!provided || provided !== configuredKey) {
     return res.status(401).json({ error: 'Internal access only.' });
   }

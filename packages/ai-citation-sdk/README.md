@@ -88,8 +88,8 @@ app.post('/webhooks/ai-citations', express.raw({ type: 'application/json' }), as
   try {
     const valid = verifyWebhookSignature(
       req.body,                                    // raw Buffer
-      req.headers['x-ai-webhook-timestamp'],       // UNIX seconds string
-      req.headers['x-ai-webhook-sig'],             // 'sha256=<hex>'
+      req.headers['X-AIACTA-Webhook-Timestamp'],       // UNIX seconds string
+      req.headers['X-AIACTA-Webhook-Signature'],             // 'sha256=<hex>'
       process.env.WEBHOOK_SECRET
     );
     if (!valid) return res.status(401).json({ error: 'Invalid signature' });
@@ -114,8 +114,8 @@ from aiacta import verify_webhook_signature
 @app.route('/webhooks/ai-citations', methods=['POST'])
 def citation_webhook():
     raw_body  = request.get_data()
-    timestamp = request.headers.get('X-AI-Webhook-Timestamp')
-    sig       = request.headers.get('X-AI-Webhook-Sig')
+    timestamp = request.headers.get('X-AIACTA-Webhook-Timestamp')
+    sig       = request.headers.get('X-AIACTA-Webhook-Signature')
     secret    = os.environ['WEBHOOK_SECRET']
 
     try:
@@ -138,8 +138,8 @@ import "github.com/aiacta-org/aiacta/ai-citation-sdk"
 
 func webhookHandler(w http.ResponseWriter, r *http.Request) {
     body, _ := io.ReadAll(r.Body)
-    timestamp := r.Header.Get("X-AI-Webhook-Timestamp")
-    sig       := r.Header.Get("X-AI-Webhook-Sig")
+    timestamp := r.Header.Get("X-AIACTA-Webhook-Timestamp")
+    sig       := r.Header.Get("X-AIACTA-Webhook-Signature")
     secret    := os.Getenv("WEBHOOK_SECRET")
 
     ok, err := aiacta.VerifyWebhookSignature(body, timestamp, sig, secret)

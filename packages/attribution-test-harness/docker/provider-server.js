@@ -86,8 +86,8 @@ async function dispatchWebhook(url, event) {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(payload),
-        'X-AI-Webhook-Sig': sig,
-        'X-AI-Webhook-Timestamp': timestamp,
+        'X-AIACTA-Webhook-Signature': sig,
+        'X-AIACTA-Webhook-Timestamp': timestamp,
       },
     }, res => { res.resume(); res.on('end', resolve); });
     req.setTimeout(10_000, () => reject(new Error('Publisher webhook timeout (§3.5: 10s limit)')));

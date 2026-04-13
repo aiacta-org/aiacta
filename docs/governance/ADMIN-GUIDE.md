@@ -581,7 +581,7 @@ traffic all being cited exclusively by one provider.
 **Layer 3 — Honeypot Verification (continuous)**
 The Honeypot Verifier (packages/honeypot-verifier) operates Verification
 Nodes — canary URLs with unique tokens. When an AI provider claims
-`X-AI-Crawl-Purpose: rag` but the canary token appears in their model's
+`X-AIACTA-Crawl-Purpose: rag` but the canary token appears in their model's
 completions (indicating training use), this is a compliance violation.
 
 **Operator action:** Monitor the audit log:

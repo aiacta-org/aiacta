@@ -72,7 +72,7 @@ standard HTTP infrastructure your teams already operate.
 Proposal 1 — Crawl Manifests
   Your crawler logs events with purpose classification.
   You expose: GET /crawl-manifest/v1
-  You send:   X-AI-Crawl-Purpose headers during crawling.
+  You send:   X-AIACTA-Crawl-Purpose headers during crawling.
 
 Proposal 2 — Citation Webhooks
   Your inference engine generates citation events.
@@ -229,16 +229,16 @@ npx @aiacta-org/ai-attribution-lint https://your-domain.com
 Silver adds two major components: crawl-time purpose headers and a publisher-queryable
 crawl manifest API.
 
-### Silver Requirement 1: X-AI-Crawl-Purpose Headers
+### Silver Requirement 1: X-AIACTA-Crawl-Purpose Headers
 
 Your crawler must send two additional HTTP headers with every crawl request:
 
 ```
-X-AI-Crawl-Purpose: rag
-X-AI-Crawl-Session: f3a9b2c1-0041-4d88-a7e2-8bd9f10cc321
+X-AIACTA-Crawl-Purpose: rag
+X-AIACTA-Crawl-Session: f3a9b2c1-0041-4d88-a7e2-8bd9f10cc321
 ```
 
-**Allowed values for X-AI-Crawl-Purpose:**
+**Allowed values for X-AIACTA-Crawl-Purpose:**
 
 | Value | When to Use |
 |-------|------------|
@@ -247,7 +247,7 @@ X-AI-Crawl-Session: f3a9b2c1-0041-4d88-a7e2-8bd9f10cc321
 | `index` | General index update; purpose to be determined later |
 | `quality-eval` | Content used for benchmark or RLHF evaluation |
 
-**X-AI-Crawl-Session** must be a UUID v4, unique per crawl session (not per URL).
+**X-AIACTA-Crawl-Session** must be a UUID v4, unique per crawl session (not per URL).
 
 **Security note:** These headers are self-reported. The AAC Honeypot Verification
 system (§2.4.1) provides technical oversight, but the primary enforcement is
@@ -326,7 +326,7 @@ Log these fields per crawl event:
 | `purpose` | Enum: training/rag/index/quality-eval |
 | `http_status` | HTTP status at crawl time |
 | `content_hash` | SHA-256 of normalised body |
-| `session_id` | UUID from your X-AI-Crawl-Session header |
+| `session_id` | UUID from your X-AIACTA-Crawl-Session header |
 
 Minimum retention: 90 days (365 days for Platinum).
 
@@ -343,8 +343,8 @@ asymmetry: publishers currently have no way of knowing when their content is cit
 ```
 POST https://publisher.com/webhooks/ai-citations
 Content-Type: application/json
-X-AI-Webhook-Sig: sha256=<hmac_signature>
-X-AI-Webhook-Timestamp: 1711234567
+X-AIACTA-Webhook-Signature: sha256=<hmac_signature>
+X-AIACTA-Webhook-Timestamp: 1711234567
 ```
 
 **Request Body:**
@@ -401,8 +401,8 @@ Every event must be HMAC-SHA256 signed. The algorithm:
 ```
 1. signed_payload = timestamp + "." + raw_json_body
 2. signature = HMAC-SHA256(shared_secret, signed_payload)
-3. Header: X-AI-Webhook-Sig: sha256=<hex_signature>
-         : X-AI-Webhook-Timestamp: <unix_seconds>
+3. Header: X-AIACTA-Webhook-Signature: sha256=<hex_signature>
+         : X-AIACTA-Webhook-Timestamp: <unix_seconds>
 ```
 
 **Node.js:**
@@ -636,8 +636,8 @@ PROVIDER_URL=https://your-api.yourdomain.com npm run test:e2e
 
 **Tier Silver (adds)**
 ```
-[ ] X-AI-Crawl-Purpose sent with every crawl request
-[ ] X-AI-Crawl-Session UUID sent with every crawl request
+[ ] X-AIACTA-Crawl-Purpose sent with every crawl request
+[ ] X-AIACTA-Crawl-Session UUID sent with every crawl request
 [ ] Crawl events logged with all required fields
 [ ] GET /crawl-manifest/v1 endpoint live
 [ ] 90-day date range limit enforced (returns 400 if exceeded)
@@ -726,8 +726,8 @@ If a publisher's endpoint returns 5xx during a batch delivery:
 def crawl_url(url, purpose, session_id):
     headers = {
         'User-Agent': 'YourBotName/1.0 (+https://yourdomain.com/bot)',
-        'X-AI-Crawl-Purpose': purpose,
-        'X-AI-Crawl-Session': session_id,
+        'X-AIACTA-Crawl-Purpose': purpose,
+        'X-AIACTA-Crawl-Session': session_id,
     }
     return requests.get(url, headers=headers, timeout=30)
 ```
@@ -736,8 +736,8 @@ def crawl_url(url, purpose, session_id):
 // Node.js — add to your existing HTTP client
 const headers = {
   'User-Agent': 'YourBotName/1.0 (+https://yourdomain.com/bot)',
-  'X-AI-Crawl-Purpose': purpose,   // 'training' | 'rag' | 'index' | 'quality-eval'
-  'X-AI-Crawl-Session': sessionId, // UUID v4, same for the whole crawl session
+  'X-AIACTA-Crawl-Purpose': purpose,   // 'training' | 'rag' | 'index' | 'quality-eval'
+  'X-AIACTA-Crawl-Session': sessionId, // UUID v4, same for the whole crawl session
 };
 ```
 

@@ -28,8 +28,8 @@ Rate limits: 60 requests/hour per domain, max 90-day range per request.
 At crawl time the bot sends:
 
 ```
-X-AI-Crawl-Purpose: rag
-X-AI-Crawl-Session: <uuid>
+X-AIACTA-Crawl-Purpose: rag
+X-AIACTA-Crawl-Session: <uuid>
 ```
 
 Allowed values: `training`, `rag`, `index`, `quality-eval`

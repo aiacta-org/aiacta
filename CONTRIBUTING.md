@@ -409,7 +409,7 @@ possible to verify that the code correctly implements the spec.
 Publisher writes ai-attribution.txt (Proposal 4)
         │
         ▼ read by
-AI provider crawler ──sends──► X-AI-Crawl-Purpose header (Proposal 1)
+AI provider crawler ──sends──► X-AIACTA-Crawl-Purpose header (Proposal 1)
         │                              │
         │ logs                         ▼ logged by publisher's
         ▼                        nginx/Apache (ai-crawl-logging.conf)

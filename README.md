@@ -42,7 +42,7 @@ from the [AIACTA v1.0 whitepaper](./publications/AIACTA_FrameworkV1_0_EricMichel
 
 | # | Proposal | Implementation Cost |
 |---|----------|---------------------|
-| 1 | Structured Crawl Manifests (`X-AI-Crawl-Purpose` + pull API) | ~6–12 weeks |
+| 1 | Structured Crawl Manifests (`X-AIACTA-Crawl-Purpose` + pull API) | ~6–12 weeks |
 | 2 | Standardised Publisher Citation Webhook API | ~12–20 weeks |
 | 3 | Referrer Header Standardisation | Near-zero (config change) |
 | 4 | `ai-attribution.txt` Open Standard | Low (spec adoption + parser) |
@@ -55,7 +55,7 @@ from the [AIACTA v1.0 whitepaper](./publications/AIACTA_FrameworkV1_0_EricMichel
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         AI Provider                                 │
-│  ┌─────────────┐   X-AI-Crawl-Purpose    ┌──────────────────────┐   │
+│  ┌─────────────┐   X-AIACTA-Crawl-Purpose    ┌──────────────────────┐   │
 │  │  AI Crawler │ ──────────────────────▶ │  Publisher Site      │   │
 │  └─────────────┘                         │  .well-known/ai-     │   │
 │  ┌─────────────┐                         │  attribution.txt     │   │
@@ -188,7 +188,7 @@ implementation requirements. The fastest path to Tier Bronze:
 
 1. Set `Referrer-Policy: origin` on all outbound link responses.
 2. Fetch and parse `/.well-known/ai-attribution.txt` at crawl time.
-3. Send `X-AI-Crawl-Purpose` and `X-AI-Crawl-Session` headers with every crawl.
+3. Send `X-AIACTA-Crawl-Purpose` and `X-AIACTA-Crawl-Session` headers with every crawl.
 
 To test your implementation end-to-end before deploying:
 
@@ -225,7 +225,7 @@ High-priority areas: **Go SDK**, **CMS plugins**, **PostgreSQL adapter**,
 | Tier | Badge | Requirements |
 |------|-------|-------------|
 | 🥉 Bronze | `AIACTA-Bronze` | Referrer headers + `ai-attribution.txt` parsing |
-| 🥈 Silver | `AIACTA-Silver` | Bronze + Crawl Manifest API + `X-AI-Crawl-Purpose` |
+| 🥈 Silver | `AIACTA-Silver` | Bronze + Crawl Manifest API + `X-AIACTA-Crawl-Purpose` |
 | 🥇 Gold   | `AIACTA-Gold`   | Silver + Citation Webhook API |
 | 💎 Platinum | `AIACTA-Platinum` | Gold + AAC participation + annual audit |
 

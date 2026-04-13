@@ -33,7 +33,7 @@ The AIACTA framework is built with the following security properties:
   throughout to prevent timing oracle attacks
 
 ### Anti-Replay
-- `X-AI-Webhook-Timestamp` header required on every event
+- `X-AIACTA-Webhook-Timestamp` header required on every event
 - Server rejects events with timestamps outside ±5-minute window
 - Idempotency keys prevent duplicate processing even if replayed within window
 
@@ -54,7 +54,7 @@ The AIACTA framework is built with the following security properties:
 
 ## Known Limitations
 
-- `X-AI-Crawl-Purpose` is self-reported by crawlers and cannot be
+- `X-AIACTA-Crawl-Purpose` is self-reported by crawlers and cannot be
   cryptographically verified at the HTTP level. Mitigation is through
   regulatory exposure and Honeypot Verification (§2.4.1). This limitation
   is explicitly disclosed per §2.4.

@@ -41,8 +41,8 @@ import crypto from 'crypto';
 
 export async function handleCitationWebhook(request) {
   const body      = await request.arrayBuffer();
-  const timestamp = request.headers.get('X-AI-Webhook-Timestamp');
-  const sig       = request.headers.get('X-AI-Webhook-Sig');
+  const timestamp = request.headers.get('X-AIACTA-Webhook-Timestamp');
+  const sig       = request.headers.get('X-AIACTA-Webhook-Signature');
 
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(

@@ -13,8 +13,8 @@ add_action('rest_api_init', function () {
 });
 function aiacta_handle(WP_REST_Request $r) {
   $secret = get_option('aiacta_webhook_secret', '');
-  $ts   = $r->get_header('x-ai-webhook-timestamp');
-  $sig  = $r->get_header('x-ai-webhook-sig');
+  $ts   = $r->get_header('X-AIACTA-Webhook-Timestamp');
+  $sig  = $r->get_header('X-AIACTA-Webhook-Signature');
   $body = $r->get_body();
   if (abs(time() - intval($ts)) > 300) {
     return new WP_Error('replay', 'Stale timestamp', ['status' => 400]);

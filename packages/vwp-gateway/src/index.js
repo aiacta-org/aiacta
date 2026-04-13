@@ -21,7 +21,7 @@ const app = express();
 app.use(express.raw({ type: 'application/json' }));
 
 const AAC_SERVER_URL   = process.env.AAC_SERVER_URL || 'http://localhost:3100';
-const AAC_INTERNAL_KEY = process.env.AAC_INTERNAL_KEY || '';
+const AIACTA_INTERNAL_KEY = process.env.AIACTA_INTERNAL_KEY || '';
 
 function resolvePublisherWebhookUrl(event) {
   return event._publisher_webhook_url
@@ -37,7 +37,7 @@ async function resolvePublisherWebhook(domain) {
     const res = await axios.get(
       `${AAC_SERVER_URL}/internal/publishers/${encodeURIComponent(domain)}/webhook`,
       {
-        headers: AAC_INTERNAL_KEY ? { 'X-AAC-Internal-Key': AAC_INTERNAL_KEY } : {},
+        headers: AIACTA_INTERNAL_KEY ? { 'X-AIACTA-Internal-Key': AIACTA_INTERNAL_KEY } : {},
         timeout: 3_000,
       }
     );

@@ -4,7 +4,7 @@
  * §3.2 specifies "minute precision only" for event timestamps to prevent
  * timing attacks that could re-identify users.
  *
- * Implementation note: the X-AI-Webhook-Timestamp header used for HMAC
+ * Implementation note: the X-AIACTA-Webhook-Timestamp header used for HMAC
  * signing (§3.4) remains at UNIX second precision — this is the
  * cryptographic nonce that prevents replay attacks. The event.timestamp
  * field inside the JSON payload is truncated to minute precision.

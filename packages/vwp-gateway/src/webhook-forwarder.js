@@ -18,14 +18,14 @@ const { URL } = require('url');
 // Fail closed in production — no fallback to a known dev default.
 // Anyone who knows 'aac-dev-secret-change-in-prod' could forge AAC-signed webhooks.
 if (process.env.NODE_ENV === 'production' &&
-    (!process.env.AAC_SIGNING_SECRET ||
-     process.env.AAC_SIGNING_SECRET === 'aac-dev-secret-change-in-prod')) {
+    (!process.env.AIACTA_SIGNING_SECRET ||
+     process.env.AIACTA_SIGNING_SECRET === 'aac-dev-secret-change-in-prod')) {
   throw new Error(
-    '[vwp-gateway] FATAL: AAC_SIGNING_SECRET is not configured or uses the dev default. ' +
+    '[vwp-gateway] FATAL: AIACTA_SIGNING_SECRET is not configured or uses the dev default. ' +
     'Set a real secret before starting in production.'
   );
 }
-const AAC_SIGNING_SECRET = process.env.AAC_SIGNING_SECRET || 'aac-dev-secret-change-in-prod';
+const AIACTA_SIGNING_SECRET = process.env.AIACTA_SIGNING_SECRET || 'aac-dev-secret-change-in-prod';
 const PUBLISHER_TIMEOUT_MS = 10_000; // §3.5
 
 // Private/reserved IP ranges that must never receive forwarded webhooks
@@ -85,7 +85,7 @@ async function forwardWebhook(event, providerId) {
   const payload   = JSON.stringify(event);
   const timestamp = String(Math.floor(Date.now() / 1000));
   const sig = 'sha256=' + crypto
-    .createHmac('sha256', AAC_SIGNING_SECRET)
+    .createHmac('sha256', AIACTA_SIGNING_SECRET)
     .update(`${timestamp}.${payload}`)
     .digest('hex');
 
@@ -93,8 +93,8 @@ async function forwardWebhook(event, providerId) {
     await axios.post(endpoint, payload, {
       headers: {
         'Content-Type':           'application/json',
-        'X-AI-Webhook-Sig':       sig,
-        'X-AI-Webhook-Timestamp': timestamp,
+        'X-AIACTA-Webhook-Signature':       sig,
+        'X-AIACTA-Webhook-Timestamp': timestamp,
       },
       timeout: PUBLISHER_TIMEOUT_MS,
       // Disable redirects — a redirect could bypass the URL validation above

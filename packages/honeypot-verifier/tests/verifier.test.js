@@ -14,7 +14,7 @@ test('registers a canary URL', async () => {
 test('serves canary page and logs crawler headers', async () => {
   const res = await request(app).get(`/canary/${canaryId}`)
     .set('User-Agent', 'TestBot/1.0')
-    .set('X-AI-Crawl-Purpose', 'rag');
+    .set('X-AIACTA-Crawl-Purpose', 'rag');
   expect(res.status).toBe(200);
   expect(res.text).toContain(uniqueToken);
 });

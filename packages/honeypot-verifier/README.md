@@ -1,6 +1,6 @@
 # honeypot-verifier
 
-> Verification node for auditing `X-AI-Crawl-Purpose` accuracy — detects when AI providers misreport crawl purposes (§2.4.1).
+> Verification node for auditing `X-AIACTA-Crawl-Purpose` accuracy — detects when AI providers misreport crawl purposes (§2.4.1).
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
 [![AIACTA Spec](https://img.shields.io/badge/spec-AIACTA%2F1.0-orange.svg)](../../docs/proposals/proposal-1-crawl-manifests.md)
@@ -11,7 +11,7 @@
 
 ## What is this?
 
-AI providers self-report their crawl purpose via `X-AI-Crawl-Purpose`. A provider claiming `rag` (real-time query answering) should not train on that content. This verifier creates "canary" pages with unique embedded tokens — if a token from a `rag`-labelled crawl later appears in the model's completions, the provider has misreported their purpose.
+AI providers self-report their crawl purpose via `X-AIACTA-Crawl-Purpose`. A provider claiming `rag` (real-time query answering) should not train on that content. This verifier creates "canary" pages with unique embedded tokens — if a token from a `rag`-labelled crawl later appears in the model's completions, the provider has misreported their purpose.
 
 ---
 
@@ -45,7 +45,7 @@ POST /canary/register
   Returns: { canary_id, url, unique_token }
 
 GET  /canary/:id
-  Serve the canary page. Logs X-AI-Crawl-Purpose and User-Agent.
+  Serve the canary page. Logs X-AIACTA-Crawl-Purpose and User-Agent.
 
 POST /canary/probe
   Check if a model completion contains any canary tokens.
@@ -64,7 +64,7 @@ GET  /health
 ## How the audit process works
 
 1. Audit team POSTs to `/canary/register` → gets a unique URL and token
-2. AI provider crawls the canary URL, logging their claimed `X-AI-Crawl-Purpose`
+2. AI provider crawls the canary URL, logging their claimed `X-AIACTA-Crawl-Purpose`
 3. After sufficient time (weeks/months for training), audit team sends probe completions to `/canary/probe`
 4. If the model returns the unique token in its output, the provider's claimed purpose was false
 

@@ -9,8 +9,8 @@ const TIMESTAMP_TOLERANCE_SECONDS = 300; // 5 minutes (§3.4)
 
 /**
  * @param {string|Buffer} payload  Raw request body
- * @param {string} timestamp       Value of X-AI-Webhook-Timestamp header
- * @param {string} sigHeader       Value of X-AI-Webhook-Sig header (sha256=<hex>)
+ * @param {string} timestamp       Value of X-AIACTA-Webhook-Timestamp header
+ * @param {string} sigHeader       Value of X-AIACTA-Webhook-Signature header (sha256=<hex>)
  * @param {string} secret          Shared HMAC secret issued at enrollment
  * @returns {boolean}
  * @throws {Error} if timestamp is outside tolerance window

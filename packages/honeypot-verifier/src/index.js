@@ -2,7 +2,7 @@
  * Honeypot Verification Node Server (§2.4.1).
  *
  * Maintains a set of "canary" URLs with unique, traceable content.
- * When an AI crawler visits a canary URL claiming X-AI-Crawl-Purpose: rag,
+ * When an AI crawler visits a canary URL claiming X-AIACTA-Crawl-Purpose: rag,
  * but that unique content later appears in model completions (indicating
  * it was used for training), the system flags the provider for a compliance audit.
  *
@@ -47,8 +47,8 @@ app.get('/canary/:id', (req, res) => {
   const logEntry = {
     canary_id:       req.params.id,
     user_agent:      req.headers['user-agent'],
-    claimed_purpose: req.headers['x-ai-crawl-purpose'] || null,
-    claimed_session: req.headers['x-ai-crawl-session'] || null,
+    claimed_purpose: req.headers['X-AIACTA-Crawl-Purpose'] || null,
+    claimed_session: req.headers['X-AIACTA-Crawl-Session'] || null,
     ip:              req.ip,
     timestamp:       new Date().toISOString(),
   };

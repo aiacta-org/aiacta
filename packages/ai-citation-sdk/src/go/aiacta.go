@@ -56,7 +56,7 @@ type Attribution struct {
 	UserInterface string `json:"user_interface"`
 }
 
-// VerifyWebhookSignature validates an X-AI-Webhook-Sig header.
+// VerifyWebhookSignature validates an X-AIACTA-Webhook-Signature header.
 //
 // The signature covers the string "${timestamp}.${rawBody}" using HMAC-SHA256
 // with the shared secret issued at enrollment (§3.4A).

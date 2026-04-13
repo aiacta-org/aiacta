@@ -6,7 +6,7 @@
 const TEST_SIGNING_SECRET = 'test-signing-secret-gateway';
 process.env.SIGNING_KEY_ANTHROPIC = TEST_SIGNING_SECRET;
 
-process.env.AAC_SIGNING_SECRET    = 'test-aac-signing-secret';
+process.env.AIACTA_SIGNING_SECRET    = 'test-aac-signing-secret';
 
 jest.mock('axios', () => ({
   get: jest.fn(),

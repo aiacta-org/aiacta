@@ -84,7 +84,7 @@
           "purpose": {
             "type": "array",
             "minItems": 1,
-            "description": "Declared crawl purpose(s) for this URL — what the AI provider intends to use the content for. Sent as X-AI-Crawl-Purpose header during crawling (§2.1).",
+            "description": "Declared crawl purpose(s) for this URL — what the AI provider intends to use the content for. Sent as X-AIACTA-Crawl-Purpose header during crawling (§2.1).",
             "items": {
               "type": "string",
               "enum": ["training", "rag", "index", "quality-eval"],

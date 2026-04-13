@@ -26,7 +26,7 @@ The VWP Gateway sits between AI providers and publishers. It receives citation e
 ```bash
 cd packages/vwp-gateway
 cp .env.example .env
-# Edit .env — at minimum set AAC_SIGNING_SECRET
+# Edit .env — at minimum set AIACTA_SIGNING_SECRET
 npm start
 ```
 
@@ -39,7 +39,7 @@ Gateway starts at **http://localhost:3200**.
 | Variable | Description |
 |----------|-------------|
 | `PORT` | Port (default: `3200`) |
-| `AAC_SIGNING_SECRET` | HMAC secret for signing events forwarded to publishers |
+| `AIACTA_SIGNING_SECRET` | HMAC secret for signing events forwarded to publishers |
 | `SIGNING_KEY_ANTHROPIC` | HMAC key for verifying events from Anthropic |
 | `SIGNING_KEY_OPENAI` | HMAC key for verifying events from OpenAI |
 | `SIGNING_KEY_GOOGLE` | HMAC key for verifying events from Google |

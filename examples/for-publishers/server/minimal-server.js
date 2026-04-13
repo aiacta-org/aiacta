@@ -123,8 +123,8 @@ app.post(
   '/webhooks/ai-citations',
   express.raw({ type: 'application/json' }),
   (req, res) => {
-    const timestamp = req.headers['x-ai-webhook-timestamp'];
-    const sigHeader = req.headers['x-ai-webhook-sig'];
+    const timestamp = req.headers['X-AIACTA-Webhook-Timestamp'];
+    const sigHeader = req.headers['X-AIACTA-Webhook-Signature'];
     const rawBody   = req.body; // Buffer
 
     // ── Step 1: Verify timestamp is within ±5 minutes (replay attack prevention §3.4)
@@ -136,7 +136,7 @@ app.post(
     // ── Step 2: Verify HMAC-SHA256 signature (§3.4A)
     // The signed payload is: timestamp + "." + raw_json_body
     if (!sigHeader) {
-      return res.status(401).json({ error: 'Missing X-AI-Webhook-Sig header' });
+      return res.status(401).json({ error: 'Missing X-AIACTA-Webhook-Signature header' });
     }
 
     const signedPayload = Buffer.concat([

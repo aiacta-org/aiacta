@@ -6,13 +6,13 @@ process.env.AAC_DB_PATH        = ':memory:';
 process.env.PROVENANCE_API_KEY = 'test-provenance-key';
 // Set the API key so the requireApiKey middleware passes in tests.
 // Without this every POST to enrollment and distribution/commit returns 503.
-process.env.AAC_API_KEY        = 'test-api-key';
+process.env.AIACTA_API_KEY        = 'test-api-key';
 const request = require('supertest');
 const { app, initDb } = require('../src/index');
 
 // Helper: attach the API key header to any request that needs it
 function withApiKey(req) {
-  return req.set('X-AAC-API-Key', process.env.AAC_API_KEY);
+  return req.set('X-AIACTA-API-Key', process.env.AIACTA_API_KEY);
 }
 
 beforeAll(() => { initDb(); });
@@ -230,7 +230,7 @@ describe('Provenance', () => {
 });
 
 describe('Auth middleware', () => {
-  test('enrollment requires X-AAC-API-Key header', async () => {
+  test('enrollment requires X-AIACTA-API-Key header', async () => {
     const res = await request(app)
       .post('/v1/enrollment/providers')
       .send({ name: 'Unauthed', contribution_mode: 'pcf', pcf_rate: 0.001 });
