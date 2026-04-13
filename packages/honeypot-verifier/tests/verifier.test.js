@@ -7,8 +7,8 @@ test('registers a canary URL', async () => {
   const res = await request(app).post('/canary/register').send({ content_template: 'Canary content {{TOKEN}}' });
   expect(res.status).toBe(201);
   expect(res.body.canary_id).toBeDefined();
-  canaryId   = res.body.canary_id;
-  uniqueToken= res.body.unique_token;
+  canaryId    = res.body.canary_id;
+  uniqueToken = res.body.unique_token;
 });
 
 test('serves canary page and logs crawler headers', async () => {

@@ -4,13 +4,15 @@
  */
 process.env.AAC_DB_PATH        = ':memory:';
 process.env.PROVENANCE_API_KEY = 'test-provenance-key';
-// Set the API key so the requireApiKey middleware passes in tests.
-// Without this every POST to enrollment and distribution/commit returns 503.
-process.env.AIACTA_API_KEY        = 'test-api-key';
+// Set the API key so requireApiKey middleware passes in tests.
+// Name matches whatever env var apiKey.js reads — update if you renamed it.
+process.env.AIACTA_API_KEY     = 'test-api-key';
+
 const request = require('supertest');
 const { app, initDb } = require('../src/index');
 
-// Helper: attach the API key header to any request that needs it
+// Attach the API key header to any request that hits a protected route.
+// Uses X-AIACTA-API-Key — the renamed header from X-AAC-API-Key.
 function withApiKey(req) {
   return req.set('X-AIACTA-API-Key', process.env.AIACTA_API_KEY);
 }
@@ -23,6 +25,15 @@ describe('Health', () => {
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('ok');
     expect(res.body.spec).toBe('AIACTA/1.0');
+  });
+});
+
+describe('Auth middleware', () => {
+  test('enrollment requires X-AIACTA-API-Key header', async () => {
+    const res = await request(app)
+      .post('/v1/enrollment/providers')
+      .send({ name: 'Unauthed', contribution_mode: 'pcf', pcf_rate: 0.001 });
+    expect([401, 503]).toContain(res.status);
   });
 });
 
@@ -108,7 +119,7 @@ describe('Citations', () => {
       },
     };
 
-    const first = await request(app).post('/v1/citations/ingest').send(event);
+    const first  = await request(app).post('/v1/citations/ingest').send(event);
     const second = await request(app).post('/v1/citations/ingest').send(event);
 
     expect(first.status).toBe(202);
@@ -125,6 +136,7 @@ describe('Citations', () => {
   });
 
   test('pull API applies since filtering', async () => {
+    // Enrollment requires auth — use withApiKey()
     await withApiKey(request(app)
       .post('/v1/enrollment/publishers'))
       .send({ domain: 'since-filter.com', reward_tier: 'standard' });
@@ -226,15 +238,5 @@ describe('Provenance', () => {
     expect(res.body.count).toBe(1);
     expect(res.body.audit_trail[0].id).toBeDefined();
     expect(res.body.audit_trail[0].idempotency_key).toBe('audit_lookup_key_001');
-  });
-});
-
-describe('Auth middleware', () => {
-  test('enrollment requires X-AIACTA-API-Key header', async () => {
-    const res = await request(app)
-      .post('/v1/enrollment/providers')
-      .send({ name: 'Unauthed', contribution_mode: 'pcf', pcf_rate: 0.001 });
-    // Without the header the middleware should return 401 (key set) or 503 (key not set)
-    expect([401, 503]).toContain(res.status);
   });
 });
