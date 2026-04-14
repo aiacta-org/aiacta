@@ -6,12 +6,15 @@ Optionally appends UTM parameters to outbound redirect URLs (§4.3).
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 
 STANDARD_REFERRERS = {
-    'openai':     'https://chat.openai.com/chat',
+    'openai':     'https://chatgpt.com/chat',
     'google':     'https://gemini.google.com/app',
     'anthropic':  'https://claude.ai/chat',
-    'xai':        'https://grok.xai.com/chat',
+    'xai':        'https://grok.com/chat',
     'perplexity': 'https://www.perplexity.ai/search',
-}
+    'microsoft':  'https://copilot.microsoft.com',
+    'meta':       'https://meta.ai',
+};
+
 
 class ReferrerMiddleware:
     """WSGI middleware that injects Referrer-Policy and optional UTM parameters."""

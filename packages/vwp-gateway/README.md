@@ -40,10 +40,14 @@ Gateway starts at **http://localhost:3200**.
 |----------|-------------|
 | `PORT` | Port (default: `3200`) |
 | `AIACTA_SIGNING_SECRET` | HMAC secret for signing events forwarded to publishers |
+| `AAC_SERVER_URL` | AAC server URL (default: `http://localhost:3100`) |
 | `SIGNING_KEY_ANTHROPIC` | HMAC key for verifying events from Anthropic |
 | `SIGNING_KEY_OPENAI` | HMAC key for verifying events from OpenAI |
 | `SIGNING_KEY_GOOGLE` | HMAC key for verifying events from Google |
-| `AAC_SERVER_URL` | AAC server URL (default: `http://localhost:3100`) |
+| `SIGNING_KEY_XAI` | HMAC key for verifying events from xAI |
+| `SIGNING_KEY_PERPLEXITY` | HMAC key for verifying events from Perplexity |
+| `SIGNING_KEY_MICROSOFT` | HMAC key for verifying events from Microsoft |
+| `SIGNING_KEY_META` | HMAC key for verifying events from Meta |
 
 ---
 
@@ -52,7 +56,7 @@ Gateway starts at **http://localhost:3200**.
 ```
 POST /gateway/dispatch
   Headers required:
-    X-AIACTA-Provider:  anthropic
+    X-AIACTA-Provider:  openai
     X-AIACTA-Timestamp: 1711234567
     X-AIACTA-Signature: sha256=<hex>   (or ed25519=<hex>)
   Body: CitationEvent JSON

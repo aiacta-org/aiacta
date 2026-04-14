@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-const COLORS = { anthropic: '#c07b39', openai: '#10a37f', google: '#4285f4', perplexity: '#6c47ff' };
+const COLORS = { anthropic: '#c07b39', openai: '#10a37f', google: '#5192fc', perplexity: '#7c5cfd', microsoft: '#0652a8', meta: '#4c1be0', xai: '#040404' };
 export default function CitationChart({ data, providers }) {
   return (
     <ResponsiveContainer width="100%" height={320}>

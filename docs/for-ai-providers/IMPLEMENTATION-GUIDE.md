@@ -131,11 +131,13 @@ Referrer-Policy: origin
 
 | Platform | Correct Referrer URL |
 |----------|---------------------|
-| OpenAI ChatGPT | `https://chat.openai.com/chat` |
-| Google Gemini | `https://gemini.google.com/app` |
 | Anthropic Claude | `https://claude.ai/chat` |
-| xAI Grok | `https://grok.xai.com/chat` |
+| Google Gemini | `https://gemini.google.com/app` |
+| Meta AI | `https://www.meta.ai` |
+| Microsoft Copilot | `https://copilot.microsoft.com` |
+| OpenAI ChatGPT | `https://chatgpt.com/chat` |
 | Perplexity | `https://www.perplexity.ai/search` |
+| xAI Grok | `https://grok.com/chat` |
 
 **Optional UTM Parameter Appending (§4.3):**
 

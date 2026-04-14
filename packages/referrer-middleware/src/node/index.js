@@ -8,11 +8,13 @@
 'use strict';
 
 const STANDARD_REFERRERS = {
-  openai:     'https://chat.openai.com/chat',
+  openai:     'https://chatgpt.com/chat',
   google:     'https://gemini.google.com/app',
   anthropic:  'https://claude.ai/chat',
-  xai:        'https://grok.xai.com/chat',
+  xai:        'https://grok.com/chat',
   perplexity: 'https://www.perplexity.ai/search',
+  microsoft:  'https://copilot.microsoft.com',
+  meta:       'https://meta.ai',
 };
 
 /**

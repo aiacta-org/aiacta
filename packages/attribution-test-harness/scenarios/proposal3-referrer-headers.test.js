@@ -14,7 +14,7 @@ function makeApp(provider) {
 }
 
 test('standard referrer URLs are defined for all major providers', () => {
-  ['openai', 'google', 'anthropic', 'xai', 'perplexity'].forEach(p => {
+  ['openai', 'google', 'anthropic', 'xai', 'perplexity', 'microsoft','meta'].forEach(p => {
     expect(STANDARD_REFERRERS[p]).toMatch(/^https:\/\//);
   });
 });

@@ -74,11 +74,14 @@ application = ReferrerMiddleware(get_wsgi_application(), provider='anthropic')
 After this middleware, your traffic analytics will correctly show AI referrals:
 
 | AI Platform | Referer in analytics |
-|-------------|---------------------|
-| Anthropic Claude | `https://claude.ai` |
-| OpenAI ChatGPT | `https://chat.openai.com` |
-| Google Gemini | `https://gemini.google.com` |
-| Perplexity | `https://www.perplexity.ai` |
+|----------|---------------------|
+| Anthropic Claude | `https://claude.ai/chat` |
+| Google Gemini | `https://gemini.google.com/app` |
+| Meta AI | `https://www.meta.ai` |
+| Microsoft Copilot | `https://copilot.microsoft.com` |
+| OpenAI ChatGPT | `https://chatgpt.com/chat` |
+| Perplexity | `https://www.perplexity.ai/search` |
+| xAI Grok | `https://grok.com/chat` |
 
 ---
 

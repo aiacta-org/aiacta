@@ -31,6 +31,10 @@ const DEV_DEFAULT_KEYS = new Set([
   'dev-hmac-key-anthropic',
   'dev-hmac-key-openai',
   'dev-hmac-key-google',
+  'dev-hmac-key-xai',
+  'dev-hmac-key-perplexity',
+  'dev-hmac-key-microsoft',
+  'dev-hmac-key-meta',
 ]);
 
 // Validate at module load time — fails the process before accepting any traffic
@@ -39,6 +43,10 @@ if (process.env.NODE_ENV === 'production') {
     ['SIGNING_KEY_ANTHROPIC', 'dev-hmac-key-anthropic'],
     ['SIGNING_KEY_OPENAI',    'dev-hmac-key-openai'],
     ['SIGNING_KEY_GOOGLE',    'dev-hmac-key-google'],
+    ['SIGNING_KEY_XAI',       'dev-hmac-key-xai'],
+    ['SIGNING_KEY_PERPLEXITY', 'dev-hmac-key-perplexity'],
+    ['SIGNING_KEY_MICROSOFT', 'dev-hmac-key-microsoft'],
+    ['SIGNING_KEY_META',      'dev-hmac-key-meta'],
   ]) {
     const val = process.env[envVar];
     if (val === devDefault || val === undefined) {
@@ -55,10 +63,15 @@ const PROVIDER_HMAC_KEYS = {};
 if (process.env.SIGNING_KEY_ANTHROPIC) PROVIDER_HMAC_KEYS['anthropic'] = process.env.SIGNING_KEY_ANTHROPIC;
 if (process.env.SIGNING_KEY_OPENAI)    PROVIDER_HMAC_KEYS['openai']    = process.env.SIGNING_KEY_OPENAI;
 if (process.env.SIGNING_KEY_GOOGLE)    PROVIDER_HMAC_KEYS['google']    = process.env.SIGNING_KEY_GOOGLE;
+if (process.env.SIGNING_KEY_XAI)       PROVIDER_HMAC_KEYS['xai']       = process.env.SIGNING_KEY_XAI;
+if (process.env.SIGNING_KEY_PERPLEXITY) PROVIDER_HMAC_KEYS['perplexity'] = process.env.SIGNING_KEY_PERPLEXITY;
+if (process.env.SIGNING_KEY_MICROSOFT) PROVIDER_HMAC_KEYS['microsoft'] = process.env.SIGNING_KEY_MICROSOFT;
+if (process.env.SIGNING_KEY_META)      PROVIDER_HMAC_KEYS['meta']      = process.env.SIGNING_KEY_META;
+
 
 // Ed25519 public keys (PEM or hex) — populated at enrollment
 const PROVIDER_ED25519_PUBKEYS = {
-  // Example: 'anthropic': '302a300506032b6570032100...'  (DER hex)
+  // Example: 'perplexity': '302a300506032b6570032100...'  (DER hex)
 };
 
 /**

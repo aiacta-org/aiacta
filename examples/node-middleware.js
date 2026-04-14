@@ -25,9 +25,12 @@ module.exports = function aiactaReferrerMiddleware(req, res, next) {
   // Proposal 3, §4: Set Referrer-Policy to 'origin' on all responses.
   // This makes AI-referred traffic visible in your analytics as:
   //   - https://claude.ai (Anthropic)
-  //   - https://chat.openai.com (OpenAI)
+  //   - https://chatgpt.com (OpenAI)
   //   - https://gemini.google.com (Google)
   //   - https://www.perplexity.ai (Perplexity)
+  //   - https://copilot.microsoft.com (Microsoft)
+  //   - https://grok.com (xAI Grok)
+  
   res.setHeader('Referrer-Policy', 'origin');
   next();
 };

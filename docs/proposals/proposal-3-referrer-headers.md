@@ -10,12 +10,14 @@ AI platforms should set `Referrer-Policy: origin` on outbound link clicks so pub
 ## Standard Referrer URLs
 
 | Provider | Referrer |
-|---|---|
-| OpenAI | `https://chat.openai.com/chat` |
-| Google | `https://gemini.google.com/app` |
-| Anthropic | `https://claude.ai/chat` |
-| xAI | `https://grok.xai.com/chat` |
+|----------|---------------------|
+| Anthropic Claude | `https://claude.ai/chat` |
+| Google Gemini | `https://gemini.google.com/app` |
+| Meta AI | `https://www.meta.ai` |
+| Microsoft Copilot | `https://copilot.microsoft.com` |
+| OpenAI ChatGPT | `https://chatgpt.com/chat` |
 | Perplexity | `https://www.perplexity.ai/search` |
+| xAI Grok | `https://grok.com/chat` |
 
 ## UTM Parameter Extension (Opt-In)
 

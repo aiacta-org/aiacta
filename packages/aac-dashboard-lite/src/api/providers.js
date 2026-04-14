@@ -3,6 +3,9 @@ export const PROVIDERS = [
   { id: 'openai',     name: 'OpenAI',     baseUrl: 'https://api.openai.com/citations/v1'    },
   { id: 'google',     name: 'Google',     baseUrl: 'https://api.google.com/citations/v1'    },
   { id: 'perplexity', name: 'Perplexity', baseUrl: 'https://api.perplexity.ai/citations/v1' },
+  { id: 'meta',       name: 'Meta',       baseUrl: 'https://api.meta.ai/citations/v1'       },
+  { id: 'microsoft',  name: 'Microsoft',  baseUrl: 'https://api.microsoft.com/citations/v1' },
+  { id: 'xai',        name: 'xAI',        baseUrl: 'https://api.grok.com/citations/v1'      },
 ];
 
 export async function* fetchCitations({ provider, domain, since, apiKey }) {
