@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.12](https://github.com/aiacta-org/aiacta/compare/v1.0.11...v1.0.12) (2026-04-14)
+
+
+### Bug Fixes
+
+* **tests:** sync test env var and header names ([#80](https://github.com/aiacta-org/aiacta/issues/80)) ([d66af70](https://github.com/aiacta-org/aiacta/commit/d66af70bb3646dc1f8943d6f6cfc81df956dd5f6))
+
 ## [1.0.11](https://github.com/aiacta-org/aiacta/compare/v1.0.10...v1.0.11) (2026-04-13)
 
 
