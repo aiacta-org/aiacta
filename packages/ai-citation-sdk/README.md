@@ -88,8 +88,8 @@ app.post('/webhooks/ai-citations', express.raw({ type: 'application/json' }), as
   try {
     const valid = verifyWebhookSignature(
       req.body,                                    // raw Buffer
-      req.headers['X-AIACTA-Webhook-Timestamp'],       // UNIX seconds string
-      req.headers['X-AIACTA-Webhook-Signature'],             // 'sha256=<hex>'
+      req.headers['x-aiacta-webhook-timestamp'],       // UNIX seconds string
+      req.headers['x-aiacta-webhook-signature'],             // 'sha256=<hex>'
       process.env.WEBHOOK_SECRET
     );
     if (!valid) return res.status(401).json({ error: 'Invalid signature' });

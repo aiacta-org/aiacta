@@ -30,7 +30,7 @@ function requireApiKey(req, res, next) {
     });
   }
 
-  const provided = req.headers['X-AIACTA-API-Key'];
+  const provided = req.headers['x-aiacta-api-key'];;
   if (!provided || provided !== configuredKey) {
     return res.status(401).json({
       error: 'Valid X-AIACTA-API-Key header required.',
@@ -51,7 +51,7 @@ function requireInternalKey(req, res, next) {
     return res.status(503).json({ error: 'Internal key not configured.' });
   }
 
-  const provided = req.headers['X-AIACTA-Internal-Key'];
+  const provided = req.headers['x-aiacta-internal-key'];
   if (!provided || provided !== configuredKey) {
     return res.status(401).json({ error: 'Internal access only.' });
   }

@@ -10,8 +10,8 @@ const { processEvent }           = require('./processor');
 
 function createExpressMiddleware({ secret, store, onEvent }) {
   return async (req, res) => {
-    const timestamp = req.headers['X-AIACTA-Webhook-Timestamp'];
-    const sig       = req.headers['X-AIACTA-Webhook-Signature'];
+    const timestamp = req.headers['x-aiacta-webhook-timestamp'];
+    const sig       = req.headers['x-aiacta-webhook-signature'];
     // Body must be raw Buffer — use express.raw() before this middleware
     try {
       const valid = verifyWebhookSignature(req.body, timestamp, sig, secret);

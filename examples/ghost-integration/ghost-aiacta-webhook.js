@@ -5,8 +5,9 @@ module.exports = {
   route: '/webhooks/ai-citations',
   method: 'POST',
   handler: async (req, res) => {
-    const ts  = req.headers['X-AIACTA-Webhook-Timestamp'];
-    const sig = req.headers['X-AIACTA-Webhook-Signature'];
+    const ts = req.headers['x-aiacta-webhook-timestamp'];
+    const sig = req.headers['x-aiacta-webhook-signature'];
+        
     const expected = 'sha256=' + crypto
       .createHmac('sha256', process.env.AIACTA_WEBHOOK_SECRET)
       .update(`${ts}.${req.rawBody}`)

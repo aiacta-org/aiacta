@@ -47,8 +47,8 @@ app.get('/canary/:id', (req, res) => {
   const logEntry = {
     canary_id:       req.params.id,
     user_agent:      req.headers['user-agent'],
-    claimed_purpose: req.headers['X-AIACTA-Crawl-Purpose'] || null,
-    claimed_session: req.headers['X-AIACTA-Crawl-Session'] || null,
+    claimed_purpose: req.headers['x-aiacta-crawl-purpose'] || null,
+    claimed_session: req.headers['x-aiacta-crawl-session'] || null,
     ip:              req.ip,
     timestamp:       new Date().toISOString(),
   };
