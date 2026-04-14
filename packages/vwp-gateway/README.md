@@ -49,6 +49,7 @@ Gateway starts at **http://localhost:3200**.
 | `SIGNING_KEY_MICROSOFT` | HMAC key for verifying events from Microsoft |
 | `SIGNING_KEY_META` | HMAC key for verifying events from Meta |
 
+
 ---
 
 ## API
