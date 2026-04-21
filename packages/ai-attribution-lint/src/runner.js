@@ -1,24 +1,36 @@
 /**
- * Runs all validation rules against the parsed config and returns results.
+ * Runs all validation rules and aggregates results.
  *
- * Rules may be sync or async (e.g. webhook-reachability does a network call).
- * We await all rules so async ones — like ruleWebhookReachability — actually
- * run to completion instead of silently returning an unresolved Promise.
+ * Each rule may return:
+ *   errors[]   — blocking issues (exit 1)
+ *   warnings[] — advisory issues (exit 0, or 1 with --strict)
+ *   info[]     — informational notes
+ *   findings[] — per-field structured results for the CLI display:
+ *                { field, value, status: 'ok'|'warn'|'error', detail? }
+ *
+ * The findings array is what drives the per-line output in the whitepaper:
+ *   Schema-Version: 1.0 ... OK
+ *   Contact: licensing@example.com ... OK (valid email)
+ *   Citation-Webhook: https://... ... WARN (endpoint not reachable)
  */
 'use strict';
 const rules = require('./rules');
 
 async function runRules(parsed, target, opts) {
-  const errors = [], warnings = [], info = [];
+  const errors   = [];
+  const warnings = [];
+  const info     = [];
+  const findings = [];
+
   for (const rule of rules) {
-    // await handles both sync rules (returns plain object) and
-    // async rules (returns Promise<object>) uniformly
-    const findings = await rule(parsed, target);
-    errors.push(...(findings.errors || []));
-    warnings.push(...(findings.warnings || []));
-    info.push(...(findings.info || []));
+    const result = await rule(parsed, target);
+    errors.push(...(result.errors   || []));
+    warnings.push(...(result.warnings || []));
+    info.push(...(result.info || []));
+    findings.push(...(result.findings || []));
   }
-  return { errors, warnings, info };
+
+  return { errors, warnings, info, findings };
 }
 
 module.exports = { runRules };
