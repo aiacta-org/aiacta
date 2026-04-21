@@ -8,6 +8,13 @@ Commit message format matters. See CONTRIBUTING.md(§5.2) for details.
 
 ---
 
+## [1.0.14](https://github.com/aiacta-org/aiacta/compare/v1.0.13...v1.0.14) (2026-04-21)
+
+
+### Bug Fixes
+
+* **lint:** CLI output with per-field OK/WARN/ERROR findings ([#87](https://github.com/aiacta-org/aiacta/issues/87)) ([4f895ae](https://github.com/aiacta-org/aiacta/commit/4f895ae19a61697376087a71358d0a5f28a4e770))
+
 ## [1.0.13](https://github.com/aiacta-org/aiacta/compare/v1.0.12...v1.0.13) (2026-04-14)
 
 
