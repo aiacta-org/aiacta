@@ -41,7 +41,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "axios": "^1.6.0",
+    "axios": "^1.15.2",
     "spdx-license-ids": "^3.0.0",
     "yargs": "^17.0.0"
   },
