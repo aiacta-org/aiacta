@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "express": "^5.2.1",
-    "better-sqlite3": "^12.8.0",
+    "better-sqlite3": "^12.9.0",
     "uuid": "^9.0.0",
     "spdx-license-ids": "^3.0.0"
   },
