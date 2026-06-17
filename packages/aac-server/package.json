@@ -18,7 +18,7 @@
     "spdx-license-ids": "^3.0.0"
   },
   "devDependencies": {
-    "jest": "^29.0.0",
+    "jest": "^30.4.2",
     "supertest": "^7.0.0",
     "nodemon": "^3.0.0"
   }
