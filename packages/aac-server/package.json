@@ -12,14 +12,14 @@
     "migrate": "node src/db/migrate.js"
   },
   "dependencies": {
-    "express": "^5.2.1",
+    "express": "^5.3.0",
     "better-sqlite3": "^12.8.0",
     "uuid": "^9.0.0",
-    "spdx-license-ids": "^3.0.0"
+    "spdx-license-ids": "^3.0.24"
   },
   "devDependencies": {
     "jest": "^29.0.0",
-    "supertest": "^7.0.0",
+    "supertest": "^7.3.1",
     "nodemon": "^3.0.0"
   }
 }
