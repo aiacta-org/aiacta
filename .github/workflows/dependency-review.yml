@@ -39,14 +39,14 @@ jobs:
     name: Review dependency changes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # actions/dependency-review-action compares the dependency
       # tree before and after the PR, and fails if any new
       # dependency has a known vulnerability at or above
       # the specified severity.
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           # Block merge if a new/changed dependency has a HIGH or
           # CRITICAL vulnerability. MODERATE issues are warned but
