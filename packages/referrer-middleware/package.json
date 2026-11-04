@@ -9,10 +9,10 @@
     "test": "jest --forceExit"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.3.0"
   },
   "devDependencies": {
     "jest": "^29.0.0",
-    "supertest": "^7.0.0"
+    "supertest": "^7.3.1"
   }
 }
